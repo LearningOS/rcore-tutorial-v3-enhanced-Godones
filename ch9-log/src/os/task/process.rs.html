@@ -293,6 +293,12 @@
 <span id="288">288</span>
 <span id="289">289</span>
 <span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::id::RecycleAllocator</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::manager::insert_into_pid2process</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::TaskControlBlock</span>;
@@ -459,7 +465,9 @@
         <span class="macro">kprintln!</span>(<span class="string">&quot;[KERN] task::process::PCB::exec():  set  trap_cx_ppn for this thread&quot;</span>);
         <span class="ident">task_inner</span>.<span class="ident">trap_cx_ppn</span> <span class="op">=</span> <span class="ident">task_inner</span>.<span class="ident">res</span>.<span class="ident">as_mut</span>().<span class="ident">unwrap</span>().<span class="ident">trap_cx_ppn</span>();
         <span class="comment">// push arguments on user stack</span>
-        <span class="macro">kprintln!</span>(<span class="string">&quot;[KERN] task::process::PCB::exec():  push arguments on user stack for this thread&quot;</span>);
+        <span class="macro">kprintln!</span>(
+            <span class="string">&quot;[KERN] task::process::PCB::exec():  push arguments on user stack for this thread&quot;</span>
+        );
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">user_sp</span> <span class="op">=</span> <span class="ident">task_inner</span>.<span class="ident">res</span>.<span class="ident">as_mut</span>().<span class="ident">unwrap</span>().<span class="ident">ustack_top</span>();
         <span class="ident">user_sp</span> <span class="op">-</span><span class="op">=</span> (<span class="ident">args</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="number">1</span>) <span class="op">*</span> <span class="ident">core::mem::size_of</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>();
         <span class="kw">let</span> <span class="ident">argv_base</span> <span class="op">=</span> <span class="ident">user_sp</span>;
@@ -565,12 +573,16 @@
         <span class="ident">child_inner</span>.<span class="ident">tasks</span>.<span class="ident">push</span>(<span class="prelude-val">Some</span>(<span class="ident">Arc::clone</span>(<span class="kw-2">&amp;</span><span class="ident">task</span>)));
         <span class="ident">drop</span>(<span class="ident">child_inner</span>);
         <span class="comment">// modify kstack_top in trap_cx of this thread</span>
-        <span class="macro">kprintln!</span>(<span class="string">&quot;[KERN] task::process::PCB::fork(): modify child&#39;s kstack_top in trap_cx of child&quot;</span>);
+        <span class="macro">kprintln!</span>(
+            <span class="string">&quot;[KERN] task::process::PCB::fork(): modify child&#39;s kstack_top in trap_cx of child&quot;</span>
+        );
         <span class="kw">let</span> <span class="ident">task_inner</span> <span class="op">=</span> <span class="ident">task</span>.<span class="ident">inner_exclusive_access</span>();
         <span class="kw">let</span> <span class="ident">trap_cx</span> <span class="op">=</span> <span class="ident">task_inner</span>.<span class="ident">get_trap_cx</span>();
         <span class="ident">trap_cx</span>.<span class="ident">kernel_sp</span> <span class="op">=</span> <span class="ident">task</span>.<span class="ident">kstack</span>.<span class="ident">get_top</span>();
         <span class="ident">drop</span>(<span class="ident">task_inner</span>);
-        <span class="macro">kprintln!</span>(<span class="string">&quot;[KERN] task::process::PCB::fork(): insert &lt;child pid, child PCB&gt; in PID2PCB BTreeMap&quot;</span>);
+        <span class="macro">kprintln!</span>(
+            <span class="string">&quot;[KERN] task::process::PCB::fork(): insert &lt;child pid, child PCB&gt; in PID2PCB BTreeMap&quot;</span>
+        );
         <span class="ident">insert_into_pid2process</span>(<span class="ident">child</span>.<span class="ident">getpid</span>(), <span class="ident">Arc::clone</span>(<span class="kw-2">&amp;</span><span class="ident">child</span>));
         <span class="comment">// add this thread to scheduler</span>
         <span class="macro">kprintln!</span>(<span class="string">&quot;[KERN] task::process::PCB::fork(): add_task(child task): add child thread to scheduler&quot;</span>);

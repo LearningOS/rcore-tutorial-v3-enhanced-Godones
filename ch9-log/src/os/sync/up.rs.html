@@ -205,7 +205,7 @@ impl&lt;T&gt; UPSafeCell&lt;T&gt; {
 <span class="macro">lazy_static!</span> {
     <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">INTR_MASKING_INFO</span>: <span class="ident">UPSafeCellRaw</span><span class="op">&lt;</span><span class="ident">IntrMaskingInfo</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw">unsafe</span> {
         <span class="macro">kprintln!</span>(<span class="string">&quot;[KERN] sync::up::lazy_static!INTR_MASKING_INFO begin&quot;</span>);
-        <span class="ident">UPSafeCellRaw::new</span>(<span class="ident">IntrMaskingInfo::new</span>()) 
+        <span class="ident">UPSafeCellRaw::new</span>(<span class="ident">IntrMaskingInfo::new</span>())
     };
 }
 

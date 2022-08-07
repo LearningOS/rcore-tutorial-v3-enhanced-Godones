@@ -94,14 +94,14 @@
 }
 
 <span class="macro">lazy_static!</span> {
-    <span class="kw">pub</span> <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">TASK_MANAGER</span>: <span class="ident">UPIntrFreeCell</span><span class="op">&lt;</span><span class="ident">TaskManager</span><span class="op">&gt;</span> <span class="op">=</span>{
+    <span class="kw">pub</span> <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">TASK_MANAGER</span>: <span class="ident">UPIntrFreeCell</span><span class="op">&lt;</span><span class="ident">TaskManager</span><span class="op">&gt;</span> <span class="op">=</span> {
         <span class="macro">kprintln!</span>(<span class="string">&quot;[KERN] task::manager::lazy_static!TASK_MANAGER begin&quot;</span>);
         <span class="kw">unsafe</span> { <span class="ident">UPIntrFreeCell::new</span>(<span class="ident">TaskManager::new</span>()) }
     };
 }
 
 <span class="macro">lazy_static!</span> {
-    <span class="kw">pub</span> <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">PID2PCB</span>: <span class="ident">UPIntrFreeCell</span><span class="op">&lt;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">ProcessControlBlock</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span>{
+    <span class="kw">pub</span> <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">PID2PCB</span>: <span class="ident">UPIntrFreeCell</span><span class="op">&lt;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">ProcessControlBlock</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> {
         <span class="macro">kprintln!</span>(<span class="string">&quot;[KERN] task::manager::lazy_static!PID2PCB begin&quot;</span>);
         <span class="kw">unsafe</span> { <span class="ident">UPIntrFreeCell::new</span>(<span class="ident">BTreeMap::new</span>()) }
     };

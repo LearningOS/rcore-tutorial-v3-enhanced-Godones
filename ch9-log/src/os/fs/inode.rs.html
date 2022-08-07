@@ -150,14 +150,14 @@
 <span id="145">145</span>
 <span id="146">146</span>
 <span id="147">147</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::File</span>;
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::easy_fs</span>::{<span class="ident">EasyFileSystem</span>, <span class="ident">Inode</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::File</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::drivers::BLOCK_DEVICE</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mm::UserBuffer</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::sync::UPIntrFreeCell</span>;
 <span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">alloc::vec::Vec</span>;
 <span class="kw">use</span> <span class="ident">bitflags</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::easy_fs</span>::{<span class="ident">EasyFileSystem</span>, <span class="ident">Inode</span>};
 <span class="kw">use</span> <span class="ident">lazy_static</span>::<span class="kw-2">*</span>;
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">OSInode</span> {

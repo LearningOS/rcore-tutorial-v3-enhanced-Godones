@@ -223,7 +223,7 @@
 <span class="kw">type</span> <span class="ident">FrameAllocatorImpl</span> <span class="op">=</span> <span class="ident">StackFrameAllocator</span>;
 
 <span class="macro">lazy_static!</span> {
-    <span class="kw">pub</span> <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">FRAME_ALLOCATOR</span>: <span class="ident">UPIntrFreeCell</span><span class="op">&lt;</span><span class="ident">FrameAllocatorImpl</span><span class="op">&gt;</span> <span class="op">=</span>{
+    <span class="kw">pub</span> <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">FRAME_ALLOCATOR</span>: <span class="ident">UPIntrFreeCell</span><span class="op">&lt;</span><span class="ident">FrameAllocatorImpl</span><span class="op">&gt;</span> <span class="op">=</span> {
         <span class="macro">kprintln!</span>(<span class="string">&quot;[KERN] mm::frame_allocator::lazy_static!FRAME_ALLOCATOR begin&quot;</span>);
         <span class="kw">unsafe</span> { <span class="ident">UPIntrFreeCell::new</span>(<span class="ident">FrameAllocatorImpl::new</span>()) }
     };

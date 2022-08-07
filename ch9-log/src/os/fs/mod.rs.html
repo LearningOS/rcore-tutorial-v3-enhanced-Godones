@@ -20,10 +20,10 @@
 <span id="15">15</span>
 <span id="16">16</span>
 <span id="17">17</span>
-</pre><pre class="rust"><code><span class="kw">mod</span> <span class="ident">inode</span>;
+</pre><pre class="rust"><code><span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">easy_fs</span>;
+<span class="kw">mod</span> <span class="ident">inode</span>;
 <span class="kw">mod</span> <span class="ident">pipe</span>;
 <span class="kw">mod</span> <span class="ident">stdio</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">easy_fs</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mm::UserBuffer</span>;
 
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">File</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> {
@@ -33,9 +33,10 @@
     <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">buf</span>: <span class="ident">UserBuffer</span>) -&gt; <span class="ident">usize</span>;
 }
 
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">easy_fs</span>::<span class="kw-2">*</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">inode</span>::{<span class="ident">list_apps</span>, <span class="ident">open_file</span>, <span class="ident">OSInode</span>, <span class="ident">OpenFlags</span>};
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">pipe</span>::{<span class="ident">make_pipe</span>, <span class="ident">Pipe</span>};
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">stdio</span>::{<span class="ident">Stdin</span>, <span class="ident">Stdout</span>};
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">easy_fs</span>::<span class="kw-2">*</span>;</code></pre></div>
+</code></pre></div>
 </section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="os" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.62.0-nightly (1f7fb6413 2022-04-10)" ></div>
 </body></html>

@@ -134,7 +134,7 @@
 }
 
 <span class="macro">lazy_static!</span> {
-    <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">TIMERS</span>: <span class="ident">UPIntrFreeCell</span><span class="op">&lt;</span><span class="ident">BinaryHeap</span><span class="op">&lt;</span><span class="ident">TimerCondVar</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span>{
+    <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">TIMERS</span>: <span class="ident">UPIntrFreeCell</span><span class="op">&lt;</span><span class="ident">BinaryHeap</span><span class="op">&lt;</span><span class="ident">TimerCondVar</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> {
         <span class="macro">kprintln!</span>(<span class="string">&quot;[KERN] timer::lazy_static!TIMERS begin&quot;</span>);
         <span class="kw">unsafe</span> { <span class="ident">UPIntrFreeCell::new</span>(<span class="ident">BinaryHeap</span>::<span class="op">&lt;</span><span class="ident">TimerCondVar</span><span class="op">&gt;</span><span class="ident">::new</span>()) }
     };

@@ -391,6 +391,19 @@
 <span id="386">386</span>
 <span id="387">387</span>
 <span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">frame_alloc</span>, <span class="ident">FrameTracker</span>};
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">PTEFlags</span>, <span class="ident">PageTable</span>, <span class="ident">PageTableEntry</span>};
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">PhysAddr</span>, <span class="ident">PhysPageNum</span>, <span class="ident">VirtAddr</span>, <span class="ident">VirtPageNum</span>};
@@ -418,7 +431,7 @@
 }
 
 <span class="macro">lazy_static!</span> {
-    <span class="kw">pub</span> <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">KERNEL_SPACE</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">UPIntrFreeCell</span><span class="op">&lt;</span><span class="ident">MemorySet</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span>{
+    <span class="kw">pub</span> <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">KERNEL_SPACE</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">UPIntrFreeCell</span><span class="op">&lt;</span><span class="ident">MemorySet</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> {
         <span class="macro">kprintln!</span>(<span class="string">&quot;[KERN] mm::memory_set::lazy_static!KERNEL_SPACE begin&quot;</span>);
         <span class="ident">Arc::new</span>(<span class="kw">unsafe</span> { <span class="ident">UPIntrFreeCell::new</span>(<span class="ident">MemorySet::new_kernel</span>()) })
     };
@@ -488,9 +501,18 @@
         <span class="comment">// map trampoline</span>
         <span class="ident">memory_set</span>.<span class="ident">map_trampoline</span>();
         <span class="comment">// map kernel sections</span>
-        <span class="macro">println!</span>(<span class="string">&quot;[KERN] .text [{:#x}, {:#x})&quot;</span>, <span class="ident">stext</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">etext</span> <span class="kw">as</span> <span class="ident">usize</span>);
-        <span class="macro">println!</span>(<span class="string">&quot;[KERN] .rodata [{:#x}, {:#x})&quot;</span>, <span class="ident">srodata</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">erodata</span> <span class="kw">as</span> <span class="ident">usize</span>);
-        <span class="macro">println!</span>(<span class="string">&quot;[KERN] .data [{:#x}, {:#x})&quot;</span>, <span class="ident">sdata</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">edata</span> <span class="kw">as</span> <span class="ident">usize</span>);
+        <span class="macro">println!</span>(
+            <span class="string">&quot;[KERN] .text [{:#x}, {:#x})&quot;</span>,
+            <span class="ident">stext</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">etext</span> <span class="kw">as</span> <span class="ident">usize</span>
+        );
+        <span class="macro">println!</span>(
+            <span class="string">&quot;[KERN] .rodata [{:#x}, {:#x})&quot;</span>,
+            <span class="ident">srodata</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">erodata</span> <span class="kw">as</span> <span class="ident">usize</span>
+        );
+        <span class="macro">println!</span>(
+            <span class="string">&quot;[KERN] .data [{:#x}, {:#x})&quot;</span>,
+            <span class="ident">sdata</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">edata</span> <span class="kw">as</span> <span class="ident">usize</span>
+        );
         <span class="macro">println!</span>(
             <span class="string">&quot;[KERN] .bss [{:#x}, {:#x})&quot;</span>,
             <span class="ident">sbss_with_stack</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">ebss</span> <span class="kw">as</span> <span class="ident">usize</span>
@@ -664,7 +686,11 @@
         <span class="macro">kprintln!</span>(<span class="string">&quot;[KERN] mm::memory_set::MapArea::new() begin&quot;</span>);
         <span class="kw">let</span> <span class="ident">start_vpn</span>: <span class="ident">VirtPageNum</span> <span class="op">=</span> <span class="ident">start_va</span>.<span class="ident">floor</span>();
         <span class="kw">let</span> <span class="ident">end_vpn</span>: <span class="ident">VirtPageNum</span> <span class="op">=</span> <span class="ident">end_va</span>.<span class="ident">ceil</span>();
-        <span class="macro">kprintln!</span>(<span class="string">&quot;[KERN] mm::memory_set::MapArea::new(start_vpn: {:?}, end_vpn: {:?}) end&quot;</span>, <span class="ident">start_vpn</span>, <span class="ident">end_vpn</span>);
+        <span class="macro">kprintln!</span>(
+            <span class="string">&quot;[KERN] mm::memory_set::MapArea::new(start_vpn: {:?}, end_vpn: {:?}) end&quot;</span>,
+            <span class="ident">start_vpn</span>,
+            <span class="ident">end_vpn</span>
+        );
         <span class="self">Self</span> {
             <span class="ident">vpn_range</span>: <span class="ident">VPNRange::new</span>(<span class="ident">start_vpn</span>, <span class="ident">end_vpn</span>),
             <span class="ident">data_frames</span>: <span class="ident">BTreeMap::new</span>(),
