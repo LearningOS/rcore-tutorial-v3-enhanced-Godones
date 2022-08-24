@@ -5,6 +5,7 @@ use super::{
 use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
+use log::info;
 use spin::{Mutex, MutexGuard};
 
 pub struct Inode {

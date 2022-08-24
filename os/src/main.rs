@@ -32,6 +32,8 @@ mod syscall;
 mod task;
 mod timer;
 mod trap;
+mod logging;
+mod dtb;
 
 // use syscall::create_desktop; //for test
 
@@ -56,10 +58,19 @@ lazy_static! {
         unsafe { UPIntrFreeCell::new(false) };
 }
 
+pub use log::{trace, debug, info, warn, error};
+use crate::lang_items::init_kernel_data;
+
 #[no_mangle]
-pub fn rust_main() -> ! {
+pub fn rust_main(_hartid: usize, device_tree_paddr: usize) -> ! {
     clear_bss();
+    logging::init();
     mm::init();
+
+    dtb::init_dtb(device_tree_paddr);
+    // dtb::dtb(device_tree_paddr);
+
+    panic!("DON'T USE THIS");
     println!("KERN: init gpu");
     #[cfg(feature = "board_qemu")]
     GPU_DEVICE.clone();
@@ -69,13 +80,19 @@ pub fn rust_main() -> ! {
     println!("KERN: init mouse");
     #[cfg(feature = "board_qemu")]
     MOUSE_DEVICE.clone();
+
     println!("KERN: init trap");
     trap::init();
     trap::enable_timer_interrupt();
     timer::set_next_trigger();
     board::device_init();
     fs::list_apps();
-    //syscall::create_desktop(); //for test
+
+
+    syscall::create_desktop(); //for test
+    // initialize kernel data for stack_trace
+    init_kernel_data();
+    // test_stack_trace();
     task::add_initproc();
     *DEV_NON_BLOCKING_ACCESS.exclusive_access() = true;
     task::run_tasks();

@@ -21,10 +21,17 @@ easy-fs = { path = "../easy-fs" }
 virtio-input-decoder = "0.1.4"
 embedded-graphics = "0.7.1"
 tinybmp = "0.3.1"
+stack_trace = {path = "../stack_trace"}
+
+log = "0.4.14"
+
+device_tree = { git = "https://github.com/rcore-os/device_tree-rs" }
+dtb-walker = { git = "https://github.com/YdrMaster/dtb-walker" }
+
 
 [features]
 board_qemu = []
 board_k210 = []
-
+default = ["board_qemu"]
 [profile.release]
 debug = true

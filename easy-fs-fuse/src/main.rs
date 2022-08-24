@@ -49,6 +49,13 @@ fn easy_fs_pack() -> std::io::Result<()> {
                 .takes_value(true)
                 .help("Executable target dir(with backslash)"),
         )
+        .arg(
+            Arg::with_name("kernel")
+                .short("k")
+                .long("kernel")
+                .takes_value(true)
+                .help("Kernel source dir(with backslash)"),
+        )
         .get_matches();
     let src_path = matches.value_of("source").unwrap();
     let target_path = matches.value_of("target").unwrap();
@@ -59,11 +66,11 @@ fn easy_fs_pack() -> std::io::Result<()> {
             .write(true)
             .create(true)
             .open(format!("{}{}", target_path, "fs.img"))?;
-        f.set_len(16 * 2048 * 512).unwrap();
+        f.set_len(32 * 2048 * 512).unwrap();
         f
     })));
-    // 16MiB, at most 4095 files
-    let efs = EasyFileSystem::create(block_file, 16 * 2048, 1);
+    // 16*2MiB, at most 4095*2 files
+    let efs = EasyFileSystem::create(block_file, 32 * 2048, 1);
     let root_inode = Arc::new(EasyFileSystem::root_inode(&efs));
     let apps: Vec<_> = read_dir(src_path)
         .unwrap()
@@ -83,6 +90,25 @@ fn easy_fs_pack() -> std::io::Result<()> {
         let inode = root_inode.create(app.as_str()).unwrap();
         // write data to easy-fs
         inode.write_at(0, all_data.as_slice());
+    }
+    let kernel_path = matches.value_of("kernel").unwrap();
+    println!("kernel path = {}{}",kernel_path,"os");
+    let mut file = File::open(format!("{}{}", kernel_path, "os")).unwrap();
+    let mut all_data: Vec<u8> = Vec::new();
+    file.read_to_end(&mut all_data).unwrap();
+    println!("{}", all_data.len());
+    //如果数据大于8MB,将数据切分
+    let mut data_vec: Vec<Vec<u8>> = Vec::new();
+    let mut data_vec_len = 0;
+    while data_vec_len < all_data.len() {
+        let mut data_vec_tmp: Vec<u8> = Vec::new();
+        data_vec_tmp.extend_from_slice(&all_data[data_vec_len..(data_vec_len + 8 * 1024 * 1024).min(all_data.len())]);
+        data_vec.push(data_vec_tmp);
+        data_vec_len += 8 * 1024 * 1024;
+    }
+    for i in 0..data_vec.len() {
+        let inode = root_inode.create(format!("os{}", i).as_str()).unwrap();
+        inode.write_at(0, data_vec[i].as_slice());
     }
     // list apps
     for app in root_inode.ls() {

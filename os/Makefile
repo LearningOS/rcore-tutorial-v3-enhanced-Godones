@@ -44,7 +44,7 @@ build: env switch-check $(KERNEL_BIN) fs-img
 
 switch-check:
 ifeq ($(BOARD), qemu)
-	(which last-qemu) || (rm -f last-k210 && touch last-qemu && make clean)
+	(which last-qemu) || (rm -f last-k210 && touch last-qemu)
 else ifeq ($(BOARD), k210)
 	(which last-k210) || (rm -f last-qemu && touch last-k210 && make clean)
 endif
@@ -66,15 +66,15 @@ $(KERNEL_BIN): kernel
 fs-img: $(APPS)
 	@cd ../user && make build TEST=$(TEST)
 	@rm -f $(FS_IMG)
-	@cd ../easy-fs-fuse && cargo run --release -- -s ../user/src/bin/ -t ../user/target/riscv64gc-unknown-none-elf/release/
+	@cd ../easy-fs-fuse && cargo run --release -- -s ../user/src/bin/ -t ../user/target/riscv64gc-unknown-none-elf/release/ -k ../os/target/riscv64gc-unknown-none-elf/release/
 
 $(APPS):
 
 kernel:
 	@echo Platform: $(BOARD)
-	@cp src/linker-$(BOARD).ld src/linker.ld
+	@#cp src/linker-$(BOARD).ld src/linker.ld
 	@cargo build --release --features "board_$(BOARD)"
-	@rm src/linker.ld
+	@#rm src/linker.ld
 
 clean:
 	@cargo clean
