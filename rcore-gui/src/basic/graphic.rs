@@ -5,8 +5,7 @@ use embedded_graphics::{
     prelude::{OriginDimensions, Point, RgbColor, Size},
 };
 
-use crate::drivers::{GPUDevice, GPU_DEVICE,};
-use crate::board::{VIRTGPU_XRES, VIRTGPU_YRES};
+use crate::drivers::gui::{GPUDevice, GPU_DEVICE, VIRTGPU_XRES};
 
 #[derive(Clone)]
 pub struct Graphics {
@@ -40,10 +39,12 @@ impl DrawTarget for Graphics {
     where
         I: IntoIterator<Item = embedded_graphics::Pixel<Self::Color>>,
     {
-        let fb = self.drv.getfreambuffer();
+        let fb = self.drv.get_frame_buffer();
 
         pixels.into_iter().for_each(|px| {
-            let idx = ((self.point.y + px.0.y) * VIRTGPU_XRES as i32 + self.point.x + px.0.x) as usize * 4;
+            let idx = ((self.point.y + px.0.y) * VIRTGPU_XRES as i32 + self.point.x + px.0.x)
+                as usize
+                * 4;
             if idx + 2 >= fb.len() {
                 return;
             }

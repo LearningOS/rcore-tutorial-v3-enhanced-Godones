@@ -150,9 +150,10 @@ impl<const BASE_ADDR: usize> CharDevice for NS16550a<BASE_ADDR> {
             if let Some(ch) = inner.read_buffer.pop_front() {
                 return ch;
             } else {
+                // 缓冲区没有字符时等待
                 let task_cx_ptr = self.condvar.wait_no_sched();
                 drop(inner);
-                schedule(task_cx_ptr);
+                schedule(task_cx_ptr); //当前任务会被挂起，等待条件变量的唤醒
             }
         }
     }
@@ -169,6 +170,7 @@ impl<const BASE_ADDR: usize> CharDevice for NS16550a<BASE_ADDR> {
             }
         });
         if count > 0 {
+            // 唤醒等待读的任务
             self.condvar.signal();
         }
     }

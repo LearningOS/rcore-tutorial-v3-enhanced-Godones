@@ -4,10 +4,16 @@ use core::any::Any;
 use embedded_graphics::pixelcolor::Rgb888;
 use tinybmp::Bmp;
 use virtio_drivers::{VirtIOGpu, VirtIOHeader};
+use crate::drivers::bus::virtio::VirtioHal;
+
+pub const VIRTGPU_XRES: u32 = 1280;
+pub const VIRTGPU_YRES: u32 = 800;
+
 const VIRTIO7: usize = 0x10007000;
+
 pub trait GPUDevice: Send + Sync + Any {
     fn update_cursor(&self);
-    fn getfreambuffer(&self) -> &mut [u8];
+    fn get_frame_buffer(&self) -> &mut [u8];
     fn flush(&self);
 }
 
@@ -16,7 +22,7 @@ lazy_static::lazy_static!(
 );
 
 pub struct VirtIOGPU {
-    gpu: UPIntrFreeCell<VirtIOGpu<'static>>,
+    gpu: UPIntrFreeCell<VirtIOGpu<'static,VirtioHal>>,
     fb: &'static [u8],
 }
 static BMP_DATA: &[u8] = include_bytes!("../../assert/mouse.bmp");
@@ -24,7 +30,6 @@ impl VirtIOGPU {
     pub fn new() -> Self {
         unsafe {
             let mut virtio = VirtIOGpu::new(&mut *(VIRTIO7 as *mut VirtIOHeader)).unwrap();
-
             let fbuffer = virtio.setup_framebuffer().unwrap();
             let len = fbuffer.len();
             let ptr = fbuffer.as_mut_ptr();
@@ -53,14 +58,14 @@ impl VirtIOGPU {
 }
 
 impl GPUDevice for VirtIOGPU {
-    fn flush(&self) {
-        self.gpu.exclusive_access().flush().unwrap();
-    }
-    fn getfreambuffer(&self) -> &mut [u8] {
+    fn update_cursor(&self) {}
+    fn get_frame_buffer(&self) -> &mut [u8] {
         unsafe {
             let ptr = self.fb.as_ptr() as *const _ as *mut u8;
             core::slice::from_raw_parts_mut(ptr, self.fb.len())
         }
     }
-    fn update_cursor(&self) {}
+    fn flush(&self) {
+        self.gpu.exclusive_access().flush().unwrap();
+    }
 }

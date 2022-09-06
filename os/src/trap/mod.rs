@@ -8,6 +8,7 @@ use crate::task::{
 };
 use crate::timer::{check_timer, set_next_trigger};
 use core::arch::{asm, global_asm};
+use log::info;
 use riscv::register::{
     mtvec::TrapMode,
     scause::{self, Exception, Interrupt, Trap},
@@ -66,9 +67,7 @@ pub fn trap_handler() -> ! {
             // jump to next instruction anyway
             let mut cx = current_trap_cx();
             cx.sepc += 4;
-
             enable_supervisor_interrupt();
-
             // get system call return value
             let result = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]);
             // cx is changed during sys_exec, so we have to call it again
@@ -100,6 +99,7 @@ pub fn trap_handler() -> ! {
             suspend_current_and_run_next();
         }
         Trap::Interrupt(Interrupt::SupervisorExternal) => {
+            info!("SupervisorExternal");
             crate::board::irq_handler();
         }
         _ => {

@@ -16,10 +16,12 @@ impl IntrTargetPriority {
 }
 
 impl PLIC {
+    /// 计算设置中断优先级的位置
     fn priority_ptr(&self, intr_source_id: usize) -> *mut u32 {
         assert!(intr_source_id > 0 && intr_source_id <= 132);
         (self.base_addr + intr_source_id * 4) as *mut u32
     }
+    /// 计算处理器核上对应中断的位置
     fn hart_id_with_priority(hart_id: usize, target_priority: IntrTargetPriority) -> usize {
         let priority_num = IntrTargetPriority::supported_number();
         hart_id * priority_num + target_priority as usize
@@ -37,6 +39,7 @@ impl PLIC {
             reg_shift,
         )
     }
+    // 计算各个处理器上的阈值设置位置
     fn threshold_ptr_of_hart_with_priority(
         &self,
         hart_id: usize,
@@ -45,6 +48,7 @@ impl PLIC {
         let id = Self::hart_id_with_priority(hart_id, target_priority);
         (self.base_addr + 0x20_0000 + 0x1000 * id) as *mut u32
     }
+    //
     fn claim_comp_ptr_of_hart_with_priority(
         &self,
         hart_id: usize,

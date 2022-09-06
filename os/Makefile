@@ -101,7 +101,8 @@ ifeq ($(BOARD),qemu)
 		-device virtio-gpu-device  \
 		-device virtio-keyboard-device  \
 		-device virtio-mouse-device \
-		-serial stdio 
+		-serial stdio \
+		-vnc :45
 endif
 
 run-inner: build

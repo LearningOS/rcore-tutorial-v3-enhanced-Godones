@@ -1,17 +1,18 @@
+use alloc::string::ToString;
 use alloc::{string::String, sync::Arc};
 use embedded_graphics::{
     mono_font::{
-        ascii::{FONT_10X20, FONT_6X10},
+        ascii::{FONT_10X20},
         MonoTextStyle,
     },
     pixelcolor::Rgb888,
-    prelude::{Dimensions, Point, Primitive, RgbColor, Size},
-    primitives::{PrimitiveStyle, Rectangle},
+    prelude::{Dimensions, Point, RgbColor, Size},
     text::{Alignment, Text},
     Drawable,
 };
 
-use crate::{drivers::GPU_DEVICE, sync::UPIntrFreeCell};
+use crate::gui::Panel;
+use crate::{drivers::gui::GPU_DEVICE, sync::UPIntrFreeCell};
 
 use super::{Component, Graphics};
 
@@ -22,6 +23,7 @@ pub struct Button {
 pub struct ButtonInner {
     graphic: Graphics,
     text: String,
+    #[allow(unused)]
     parent: Option<Arc<dyn Component>>,
 }
 
@@ -30,7 +32,7 @@ impl Button {
         let point = match &parent {
             Some(p) => {
                 let (_, p) = p.bound();
-                Point::new(p.x + point.x, p.y + point.y)
+                Point::new(p.x + point.x, p.y + point.y) //相对于父组件的坐标
             }
             None => point,
         };
@@ -48,6 +50,22 @@ impl Button {
             },
         }
     }
+    pub fn reset_text(&self, text: &str) -> &Self {
+        let mut inner = self.inner.exclusive_access();
+        inner.text = text.to_string();
+        self
+    }
+    pub fn add_text(&self, text: &str) -> &Self {
+        let mut inner = self.inner.exclusive_access();
+        inner.text += text;
+        self
+    }
+    pub fn cover_part(&self, color: Rgb888) -> &Self {
+        let inner = self.inner.exclusive_access();
+        let panel = Panel::new(inner.graphic.size, inner.graphic.point).with_color(color);
+        panel.paint();
+        self
+    }
 }
 
 impl Component for Button {
@@ -60,19 +78,15 @@ impl Component for Button {
             MonoTextStyle::new(&FONT_10X20, Rgb888::BLACK),
             Alignment::Center,
         )
-        .draw(&mut inner.graphic);
+        .draw(&mut inner.graphic)
+        .expect("draw text error");
     }
 
-    fn add(&self, comp: alloc::sync::Arc<dyn Component>) {
-        unreachable!()
+    fn add(&self, _comp: Arc<dyn Component>) {
+        todo!("add child component in button");
     }
 
-    fn bound(
-        &self,
-    ) -> (
-        embedded_graphics::prelude::Size,
-        embedded_graphics::prelude::Point,
-    ) {
+    fn bound(&self) -> (Size, Point) {
         let inner = self.inner.exclusive_access();
         (inner.graphic.size, inner.graphic.point)
     }

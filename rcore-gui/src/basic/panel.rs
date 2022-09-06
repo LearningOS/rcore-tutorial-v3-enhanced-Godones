@@ -1,4 +1,4 @@
-use alloc::{collections::VecDeque, rc::Weak, sync::Arc};
+use alloc::{collections::VecDeque, sync::Arc};
 use embedded_graphics::{
     pixelcolor::Rgb888,
     prelude::{Point, Primitive, RgbColor, Size},
@@ -6,7 +6,7 @@ use embedded_graphics::{
     Drawable,
 };
 
-use crate::{drivers::GPU_DEVICE, sync::UPIntrFreeCell};
+use crate::{drivers::gui::GPU_DEVICE, sync::UPIntrFreeCell};
 
 use super::{Component, Graphics};
 
@@ -14,6 +14,7 @@ pub struct Panel {
     inner: UPIntrFreeCell<PanelInner>,
 }
 struct PanelInner {
+    back_color: Rgb888,
     graphic: Graphics,
     comps: VecDeque<Arc<dyn Component>>,
 }
@@ -23,6 +24,7 @@ impl Panel {
         Self {
             inner: unsafe {
                 UPIntrFreeCell::new(PanelInner {
+                    back_color: Rgb888::WHITE,
                     graphic: Graphics {
                         size,
                         point,
@@ -33,6 +35,10 @@ impl Panel {
             },
         }
     }
+    pub fn with_color(self, color: Rgb888) -> Self {
+        self.inner.exclusive_access().back_color = color;
+        self
+    }
 }
 
 impl Component for Panel {
@@ -40,18 +46,18 @@ impl Component for Panel {
         let mut inner = self.inner.exclusive_access();
 
         Rectangle::new(Point::new(0, 0), inner.graphic.size)
-            .into_styled(PrimitiveStyle::with_fill(Rgb888::WHITE))
+            .into_styled(PrimitiveStyle::with_fill(inner.back_color))
             .draw(&mut inner.graphic)
             .unwrap();
 
         let len = inner.comps.len();
         drop(inner);
-        for i in 0..len {
-            let mut inner = self.inner.exclusive_access();
+        (0..len).into_iter().for_each(|i| {
+            let inner = self.inner.exclusive_access();
             let comp = Arc::downgrade(&inner.comps[i]);
             drop(inner);
             comp.upgrade().unwrap().paint();
-        }
+        })
     }
 
     fn add(&self, comp: alloc::sync::Arc<dyn Component>) {

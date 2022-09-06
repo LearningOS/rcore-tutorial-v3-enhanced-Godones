@@ -34,6 +34,8 @@ mod sync;
 mod thread;
 #[cfg(feature = "board_qemu")]
 pub use self::gui::create_desktop;
+#[cfg(feature = "board_qemu")]
+pub use self::gui::TIMER;
 use fs::*;
 
 #[cfg(feature = "board_qemu")]

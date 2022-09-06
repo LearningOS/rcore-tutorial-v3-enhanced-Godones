@@ -12,7 +12,7 @@ pub type CharDeviceImpl = crate::drivers::chardev::NS16550a<VIRT_UART>;
 
 pub const VIRT_PLIC: usize = 0xC00_0000;
 pub const VIRT_UART: usize = 0x1000_0000;
-
+#[allow(unused)]
 pub const VIRTGPU_XRES: u32 = 1280;
 pub const VIRTGPU_YRES: u32 = 800;
 
@@ -21,7 +21,11 @@ use crate::drivers::chardev::{CharDevice, UART};
 use crate::drivers::plic::{IntrTargetPriority, PLIC};
 use crate::drivers::{KEYBOARD_DEVICE, MOUSE_DEVICE};
 
+use crate::drivers::rtc::QEMU_RTC;
+use crate::info;
+
 pub fn device_init() {
+    info!("init device keyboard/mouse/block/uart");
     use riscv::register::sie;
     let mut plic = unsafe { PLIC::new(VIRT_PLIC) };
     let hart_id: usize = 0;
@@ -29,8 +33,8 @@ pub fn device_init() {
     let machine = IntrTargetPriority::Machine;
     plic.set_threshold(hart_id, supervisor, 0);
     plic.set_threshold(hart_id, machine, 1);
-    //irq nums: 5 keyboard, 6 mouse, 8 block, 10 uart
-    for intr_src_id in [5usize, 6, 8 , 10] {
+    //irq nums: 5 keyboard, 6 mouse, 8 block, 10 uart,11 rtc
+    for intr_src_id in [5usize, 6, 8, 10, 11] {
         plic.enable(hart_id, supervisor, intr_src_id);
         plic.set_priority(intr_src_id, 1);
     }
@@ -47,9 +51,17 @@ pub fn irq_handler() {
         6 => MOUSE_DEVICE.handle_irq(),
         8 => BLOCK_DEVICE.handle_irq(),
         10 => UART.handle_irq(),
+        11 => rtc_handler(),
         _ => panic!("unsupported IRQ {}", intr_src_id),
     }
     plic.complete(0, IntrTargetPriority::Supervisor, intr_src_id);
+}
+
+fn rtc_handler() {
+    unsafe {
+        QEMU_RTC.get().unwrap().handle_irq();
+        QEMU_RTC.get().unwrap().set_alarm_with_next_s(1);
+    }
 }
 
 //ref:: https://github.com/andre-richter/qemu-exit

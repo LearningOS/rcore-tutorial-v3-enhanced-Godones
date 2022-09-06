@@ -1,4 +1,4 @@
-use alloc::{sync::Arc, vec::Vec};
+use alloc::{sync::Arc};
 use embedded_graphics::{
     image::Image,
     pixelcolor::Rgb888,
@@ -8,7 +8,7 @@ use embedded_graphics::{
 use tinybmp::Bmp;
 
 use crate::{
-    drivers::{BLOCK_DEVICE, GPU_DEVICE},
+    drivers::{gui::GPU_DEVICE},
     sync::UPIntrFreeCell,
 };
 
@@ -17,7 +17,7 @@ use super::{Component, Graphics};
 pub struct ImageComp {
     inner: UPIntrFreeCell<ImageInner>,
 }
-
+#[allow(unused)]
 pub struct ImageInner {
     image: &'static [u8],
     graphic: Graphics,
@@ -56,20 +56,12 @@ impl Component for ImageComp {
             core::slice::from_raw_parts(ptr, len)
         };
         let bmp = Bmp::<Rgb888>::from_slice(b).unwrap();
-        let point = match &inner.parent {
-            Some(parent) => {
-                let (_, point) = parent.bound();
-                Point::new(
-                    point.x + inner.graphic.point.x,
-                    point.y + inner.graphic.point.y,
-                )
-            }
-            None => inner.graphic.point,
-        };
-        Image::new(&bmp, point).draw(&mut inner.graphic);
+        Image::new(&bmp, Point::new(0, 0))
+            .draw(&mut inner.graphic)
+            .expect("make image error");
     }
 
-    fn add(&self, comp: alloc::sync::Arc<dyn Component>) {
+    fn add(&self, _comp: alloc::sync::Arc<dyn Component>) {
         todo!()
     }
 

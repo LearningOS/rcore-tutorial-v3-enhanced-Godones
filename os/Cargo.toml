@@ -19,15 +19,21 @@ k210-hal = { git = "https://github.com/wyfcyx/k210-hal" }
 k210-soc = { git = "https://github.com/wyfcyx/k210-soc" }
 easy-fs = { path = "../easy-fs" }
 virtio-input-decoder = "0.1.4"
-embedded-graphics = "0.7.1"
-tinybmp = "0.3.1"
-stack_trace = {path = "../stack_trace"}
 
+stack_trace = {path = "../stack_trace"}
 log = "0.4.14"
 
 device_tree = { git = "https://github.com/rcore-os/device_tree-rs" }
 dtb-walker = { git = "https://github.com/YdrMaster/dtb-walker" }
+time = { version = "0.3.7" ,default-features = false,features = ["macros"] }
+once_cell = {version = "1.13.1",default-features = false,features = ["alloc"]}
 
+
+embedded-text = "0.5.0"
+embedded-graphics = "0.7.1"
+tinybmp = "0.3.1"
+
+rcore-gui = {path = "../rcore-gui"}
 
 [features]
 board_qemu = []

@@ -1,16 +1,16 @@
+use crate::drivers::rtc::{init_rtc, QEMU_RTC};
+use crate::sync::UPIntrFreeCell;
 use alloc::format;
 use alloc::string::{String, ToString};
-use device_tree::{DeviceTree, Node};
-use device_tree::util::SliceRead;
-use lazy_static::lazy_static;
-use log::{info, trace, warn};
-use virtio_drivers::{DeviceType, VirtIOHeader};
 use alloc::vec::Vec;
 use core::fmt::{Debug, Formatter};
-use crate::sync::UPIntrFreeCell;
+use device_tree::util::SliceRead;
+use device_tree::{DeviceTree, Node};
+use lazy_static::lazy_static;
+use log::{info, trace};
 
-pub fn init_dtb(addr:usize){
-    trace!("init dtb at 0x{:x}",addr);
+pub fn init_dtb(addr: usize) {
+    trace!("init dtb at 0x{:x}", addr);
     #[repr(C)]
     struct DtbHeader {
         be_magic: u32,
@@ -31,8 +31,8 @@ pub fn init_dtb(addr:usize){
     }
 }
 
-fn walk_dt_node(dt:&Node){
-    if let Ok(compatible) = dt.prop_str("compatible") {
+fn walk_dt_node(dt: &Node) {
+    if let Ok(_compatible) = dt.prop_str("compatible") {
         device_probe(dt);
     }
     for child in dt.children.iter() {
@@ -51,25 +51,29 @@ struct DeviceBase {
 
 impl Debug for DeviceBase {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        write!(f, "DeviceBase {{ name: {:?}, base_addr: {:#x}, size: {:#x}, irq: {:?} }}", self.name, self.base_addr, self.size, self.irq)
+        write!(
+            f,
+            "DeviceBase {{ name: {:?}, base_addr: {:#x}, size: {:#x}, irq: {:?} }}",
+            self.name, self.base_addr, self.size, self.irq
+        )
     }
 }
 
-#[derive(Default,Debug)]
+#[derive(Default, Debug)]
 struct UartDevice {
     base: DeviceBase,
     baud_rate: u32,
 }
-#[derive(Default,Debug)]
+#[derive(Default, Debug)]
 struct RtcDevice {
     base: DeviceBase,
 }
-#[derive(Default,Debug)]
+#[derive(Default, Debug)]
 struct VirtioDevice {
     base: DeviceBase,
 }
-#[derive(Debug,Default)]
-struct PlicDevice{
+#[derive(Debug, Default)]
+struct PlicDevice {
     base: DeviceBase,
 }
 
@@ -77,65 +81,66 @@ struct PlicDevice{
 enum Device {
     Uart(UartDevice),
     Rtc(RtcDevice),
-    Virtio(VirtioDevice),
+    VirtIo(VirtioDevice),
     Plic(PlicDevice),
     Unknown,
 }
 
 lazy_static! {
-    static ref DEVICES: UPIntrFreeCell<Vec<Device>> = unsafe{
-        UPIntrFreeCell::new(Vec::new())
-    };
+    static ref DEVICES: UPIntrFreeCell<Vec<Device>> = unsafe { UPIntrFreeCell::new(Vec::new()) };
 }
 
-fn register_range(node:&Node)->(usize,usize){
-    if let Some(reg) = node.prop_raw("reg"){
+fn register_range(node: &Node) -> (usize, usize) {
+    if let Some(reg) = node.prop_raw("reg") {
         let paddr = reg.as_slice().read_be_u64(0).unwrap();
         let size = reg.as_slice().read_be_u64(8).unwrap();
         let vaddr = paddr;
-        return (vaddr as usize,size as usize);
+        return (vaddr as usize, size as usize);
     }
-    (0,0)
+    (0, 0)
 }
-fn irq_number(node:&Node)->u32{
-    if let Ok(irq) = node.prop_u32("interrupts"){
+fn irq_number(node: &Node) -> u32 {
+    if let Ok(irq) = node.prop_u32("interrupts") {
         return irq;
     }
     0
 }
 
-fn device_probe(node:&Node){
+fn device_probe(node: &Node) {
     let compatible = node.prop_str("compatible");
     if let Ok(str) = compatible {
         let mut base_info = DeviceBase::default();
         base_info.name = str.to_string();
         match str {
+            "ns16550a"
+            | "google,goldfish-rtc"
+            | "virtio,mmio"
+            | "sifive,plic-1.0.0\0riscv,plic0" => {
+                (base_info.base_addr, base_info.size) = register_range(node);
+                base_info.irq = irq_number(node);
+            }
+            _ => (),
+        }
+        match str {
             "ns16550a" => {
-                (base_info.base_addr,base_info.size) = register_range(node);
                 let freq = node.prop_u32("clock-frequency").unwrap_or(0);
                 assert!(freq > 0);
-                base_info.irq = irq_number(node);
                 let mut uart_info = UartDevice::default();
                 uart_info.base = base_info;
                 uart_info.baud_rate = freq;
                 DEVICES.exclusive_access().push(Device::Uart(uart_info));
             }
             "google,goldfish-rtc" => {
-                (base_info.base_addr,base_info.size) = register_range(node);
                 let mut rtc_info = RtcDevice::default();
-                base_info.irq = irq_number(node);
                 rtc_info.base = base_info;
                 DEVICES.exclusive_access().push(Device::Rtc(rtc_info));
             }
             "virtio,mmio" => {
-                (base_info.base_addr,base_info.size) = register_range(node);
-                base_info.irq = irq_number(node);
                 let mut virtio_info = VirtioDevice::default();
                 virtio_info.base = base_info;
-                DEVICES.exclusive_access().push(Device::Virtio(virtio_info));
+                DEVICES.exclusive_access().push(Device::VirtIo(virtio_info));
             }
             "sifive,plic-1.0.0\0riscv,plic0" => {
-                (base_info.base_addr,base_info.size) = register_range(node);
                 let mut plic_info = PlicDevice::default();
                 plic_info.base = base_info;
                 DEVICES.exclusive_access().push(Device::Plic(plic_info));
@@ -145,13 +150,29 @@ fn device_probe(node:&Node){
     }
 }
 
+pub fn init_device() {
+    DEVICES
+        .exclusive_access()
+        .iter()
+        .for_each(|device| match device {
+            Device::Rtc(rtc_device) => {
+                init_rtc(rtc_device.base.base_addr, rtc_device.base.irq);
+                let time = unsafe { QEMU_RTC.get().unwrap().read_time() };
+                println!("time: {:?}", time);
+                unsafe {
+                    QEMU_RTC.get().unwrap().enable_irq();
+                    QEMU_RTC.get().unwrap().set_alarm_with_next_s(1); //每分钟中断一次更新，时间
+                }
+            }
+            _ => (),
+        })
+}
 
-
-
-pub fn dtb(addr:usize){
+#[allow(unused)]
+pub fn dtb(addr: usize) {
     use dtb_walker::{utils::indent, Dtb, DtbObj, HeaderError as E, WalkOperation as Op};
 
-    info!("init dtb at 0x{:x}",addr);
+    info!("init dtb at 0x{:x}", addr);
     #[repr(C)]
     struct DtbHeader {
         be_magic: u32,
@@ -171,7 +192,9 @@ pub fn dtb(addr:usize){
         Dtb::from_raw_parts_filtered(dtb_data.as_ptr() as _, |e| {
             matches!(e, E::Misaligned(4) | E::LastCompVersion(16))
         })
-    }.map_err(|e| format!("verify header failed: {e:?}")).unwrap();
+    }
+    .map_err(|e| format!("verify header failed: {e:?}"))
+    .unwrap();
     dtb.walk(|path, obj| match obj {
         DtbObj::SubNode { name } => {
             info!("{}{path}/{name}", indent(path.level(), INDENT_WIDTH));

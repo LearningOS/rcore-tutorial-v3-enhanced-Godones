@@ -6,15 +6,14 @@ use alloc::{
 use embedded_graphics::{
     mono_font::{ascii::FONT_10X20, MonoTextStyle},
     pixelcolor::Rgb888,
-    prelude::{Dimensions, Point, Primitive, RgbColor, Size},
-    primitives::{PrimitiveStyle, Rectangle},
+    prelude::{Point, RgbColor, Size},
     text::{Alignment, Text},
     Drawable,
 };
 
-use crate::{drivers::GPU_DEVICE, sync::UPIntrFreeCell};
+use crate::{drivers::gui::GPU_DEVICE, sync::UPIntrFreeCell};
 
-use super::{button::Button, Component, Graphics, Panel};
+use super::{ Component, Graphics};
 
 pub struct Terminal {
     inner: UPIntrFreeCell<TerminalInner>,
@@ -22,7 +21,7 @@ pub struct Terminal {
 
 pub struct TerminalInner {
     pub text: String,
-    titel: Option<String>,
+    title: Option<String>,
     graphic: Graphics,
     comps: VecDeque<Arc<dyn Component>>,
 }
@@ -31,15 +30,15 @@ impl Terminal {
     pub fn new(
         size: Size,
         point: Point,
-        parent: Option<Arc<dyn Component>>,
-        titel: Option<String>,
+        _parent: Option<Arc<dyn Component>>,
+        title: Option<String>,
         text: String,
     ) -> Self {
         Self {
             inner: unsafe {
                 UPIntrFreeCell::new(TerminalInner {
                     text,
-                    titel,
+                    title,
                     graphic: Graphics {
                         size,
                         point,
@@ -60,29 +59,30 @@ impl Terminal {
             MonoTextStyle::new(&FONT_10X20, Rgb888::BLACK),
             Alignment::Left,
         )
-        .draw(&mut inner.graphic);
+        .draw(&mut inner.graphic)
+        .expect("draw text error");
     }
 }
 
 impl Component for Terminal {
     fn paint(&self) {
-        let mut inner = self.inner.exclusive_access();
+        let inner = self.inner.exclusive_access();
         let len = inner.comps.len();
         drop(inner);
         for i in 0..len {
-            let mut inner = self.inner.exclusive_access();
+            let inner = self.inner.exclusive_access();
             let comp = Arc::downgrade(&inner.comps[i]);
             drop(inner);
             comp.upgrade().unwrap().paint();
         }
         let mut inner = self.inner.exclusive_access();
-        let titel = inner.titel.get_or_insert("No Titel".to_string()).clone();
+        let title = inner.title.get_or_insert("No Titel".to_string()).clone();
         let text = Text::new(
-            titel.as_str(),
+            title.as_str(),
             Point::new(20, 20),
             MonoTextStyle::new(&FONT_10X20, Rgb888::BLACK),
         );
-        text.draw(&mut inner.graphic);
+        text.draw(&mut inner.graphic).expect("draw text error");
 
         Text::with_alignment(
             inner.text.clone().as_str(),
@@ -90,7 +90,8 @@ impl Component for Terminal {
             MonoTextStyle::new(&FONT_10X20, Rgb888::BLACK),
             Alignment::Left,
         )
-        .draw(&mut inner.graphic);
+        .draw(&mut inner.graphic)
+        .expect("draw text error");
     }
 
     fn add(&self, comp: Arc<dyn Component>) {
