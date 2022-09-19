@@ -102,6 +102,7 @@ ifeq ($(BOARD),qemu)
 		-device virtio-keyboard-device  \
 		-device virtio-mouse-device \
 		-serial stdio \
+		-vga std \
 		-vnc :45
 endif
 

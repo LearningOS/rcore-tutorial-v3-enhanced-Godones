@@ -1,7 +1,7 @@
 use alloc::collections::VecDeque;
 use alloc::sync::Arc;
 use embedded_graphics::Drawable;
-use crate::gui::{Component, Graphics};
+use crate::{Component, Graphics};
 use crate::{UPIntrFreeCell, GPU_DEVICE};
 use embedded_graphics::geometry::{Point, Size};
 use embedded_graphics::pixelcolor::Rgb888;
@@ -53,7 +53,7 @@ impl Bar {
                     graphic: Graphics {
                         size,
                         point,
-                        drv: GPU_DEVICE.clone(),
+                        drv: GPU_DEVICE.exclusive_access().clone(),
                     },
                     comps: VecDeque::new(),
                     parent,

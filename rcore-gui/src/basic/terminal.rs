@@ -10,8 +10,8 @@ use embedded_graphics::{
     text::{Alignment, Text},
     Drawable,
 };
-
-use crate::{drivers::gui::GPU_DEVICE, sync::UPIntrFreeCell};
+use rcore_sync::UPIntrFreeCell;
+use crate::GPU_DEVICE;
 
 use super::{ Component, Graphics};
 
@@ -42,7 +42,7 @@ impl Terminal {
                     graphic: Graphics {
                         size,
                         point,
-                        drv: GPU_DEVICE.clone(),
+                        drv: GPU_DEVICE.exclusive_access().clone(),
                     },
                     comps: VecDeque::new(),
                 })

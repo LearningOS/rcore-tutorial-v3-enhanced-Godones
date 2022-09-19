@@ -1,13 +1,15 @@
 use crate::drivers::gui::{VIRTGPU_XRES, VIRTGPU_YRES};
-use alloc::{string::ToString, sync::Arc};
-use embedded_graphics::{
-    prelude::{Point, Size},
-};
-use log::info;
-
 use crate::drivers::rtc::QEMU_RTC;
-use crate::gui::{Bar, Button, Component, GodTerminal, IconController, ImageComp, Panel, Windows};
-use crate::{fs::ROOT_INODE, sync::UPIntrFreeCell};
+use crate::fs::ROOT_INODE;
+use crate::gui::{
+    Bar, Button, Component, GodTerminal, IconController, ImageComp, Panel, Status, Windows,
+    SCREEN_MANAGER, SNAKE,
+};
+use crate::{Snake, UPIntrFreeCell};
+use alloc::{string::ToString, sync::Arc};
+use embedded_graphics::prelude::{Point, Size};
+use log::info;
+use virtio_input_decoder::Key;
 
 static DT: &[u8] = include_bytes!("../assert/desktop.bmp");
 
@@ -24,6 +26,7 @@ lazy_static::lazy_static!(
 );
 
 pub fn create_desktop() -> isize {
+    info!("create desktop");
     let p: Arc<dyn Component + 'static> = Arc::new(Panel::new(
         Size::new(VIRTGPU_XRES, VIRTGPU_YRES),
         Point::new(0, 0),
@@ -49,25 +52,21 @@ pub fn create_desktop() -> isize {
 }
 
 pub fn create_god_terminal() {
-    let god_terminal = GodTerminal::new(Size::new(500,  500), Point::new(100, 100));
-    god_terminal.add_str("hello world")
-        .add_str("\n")
-        .add_str("Godterminal");
+    info!("create god terminal");
+    let god_terminal = GodTerminal::new(Size::new(500, 500), Point::new(400, 100));
     let mut pad = PAD.exclusive_access();
     *pad = Some(Arc::new(god_terminal));
 }
 
-
 pub fn create_windows() {
     let desktop = DESKTOP.exclusive_access();
-    let windows = Arc::new(Windows::new(Size::new(500, 500), Point::new(40, 40)));
-    windows.with_name("windows").paint();
-    let windows1 = Arc::new(Windows::new(Size::new(500, 500), Point::new(500, 200)));
-    windows1.with_name("Terminal").paint();
+    let windows = Windows::new(Size::new(500, 500), Point::new(40, 40));
+    windows.set_title("windows").paint();
+    let windows1 = Windows::new(Size::new(500, 500), Point::new(500, 200));
+    windows1.set_title("Terminal").paint();
     desktop.add(windows);
     desktop.add(windows1);
 }
-
 
 fn create_desktop_bar() {
     info!("create desktop bar");
@@ -101,4 +100,19 @@ fn create_desktop_bar() {
     bar.paint();
     // img.paint();
     desktop.add(bar.clone());
+}
+
+pub fn snake_game() -> isize {
+    let ans = Snake::new().run();
+    loop {
+        let event = SNAKE.exclusive_access().as_ref().unwrap().get_event();
+        if ans == Status::Dead {
+            if let Some(key) = event {
+                if key == Key::R {
+                    Snake::new().run();
+                }
+            }
+        }
+    }
+    0
 }

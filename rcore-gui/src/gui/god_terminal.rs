@@ -1,5 +1,5 @@
-use crate::gui::{Component, TextEdit, Windows};
-use crate::UPIntrFreeCell;
+use crate::{Component, TextEdit, Windows};
+use crate::{UPIntrFreeCell};
 use alloc::sync::Arc;
 use embedded_graphics::geometry::Size;
 use embedded_graphics::pixelcolor::Rgb888;

@@ -5,8 +5,8 @@ use embedded_graphics::{
     primitives::{PrimitiveStyle, Rectangle},
     Drawable,
 };
-
-use crate::{drivers::gui::GPU_DEVICE, sync::UPIntrFreeCell};
+use log::info;
+use crate::{GPU_DEVICE,UPIntrFreeCell};
 
 use super::{Component, Graphics};
 
@@ -28,7 +28,7 @@ impl Panel {
                     graphic: Graphics {
                         size,
                         point,
-                        drv: GPU_DEVICE.clone(),
+                        drv: GPU_DEVICE.exclusive_access().clone(),
                     },
                     comps: VecDeque::new(),
                 })
@@ -44,23 +44,24 @@ impl Panel {
 impl Component for Panel {
     fn paint(&self) {
         let mut inner = self.inner.exclusive_access();
-
         Rectangle::new(Point::new(0, 0), inner.graphic.size)
             .into_styled(PrimitiveStyle::with_fill(inner.back_color))
             .draw(&mut inner.graphic)
             .unwrap();
 
         let len = inner.comps.len();
+        info!("paint rect over :{}",len);
         drop(inner);
-        (0..len).into_iter().for_each(|i| {
-            let inner = self.inner.exclusive_access();
+        for i in 0..len {
+            let mut inner = self.inner.exclusive_access();
             let comp = Arc::downgrade(&inner.comps[i]);
             drop(inner);
             comp.upgrade().unwrap().paint();
-        })
+        }
     }
 
-    fn add(&self, comp: alloc::sync::Arc<dyn Component>) {
+    fn add(&self, comp:Arc<dyn Component>) {
+        info!("add comp");
         let mut inner = self.inner.exclusive_access();
         inner.comps.push_back(comp);
     }

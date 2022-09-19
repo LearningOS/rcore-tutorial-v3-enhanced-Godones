@@ -4,10 +4,11 @@ mod edit;
 mod graphic;
 mod icon;
 mod image;
+mod label;
+pub mod manager;
 mod panel;
 mod terminal;
 mod window;
-mod label;
 
 use alloc::sync::Arc;
 pub use bar::Bar;

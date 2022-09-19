@@ -1,7 +1,7 @@
 use alloc::string::String;
 use alloc::sync::Arc;
-use crate::gui::{Component, Graphics};
-use crate::UPIntrFreeCell;
+use crate::{Component};
+use crate::{Graphics, UPIntrFreeCell};
 
 pub struct Label{
     inner: UPIntrFreeCell<LabelInner>,

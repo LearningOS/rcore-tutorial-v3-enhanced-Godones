@@ -1,4 +1,4 @@
-use crate::gui::{Component, Graphics, Panel};
+use crate::{Component, Graphics, Panel};
 use crate::{UPIntrFreeCell, GPU_DEVICE};
 use alloc::string::String;
 use alloc::sync::Arc;
@@ -38,7 +38,7 @@ impl TextEdit {
                 None => point,
             }
         };
-
+        let gpu = GPU_DEVICE.exclusive_access().clone();
         Self {
             inner: unsafe {
                 UPIntrFreeCell::new(TextEditInner {
@@ -47,7 +47,7 @@ impl TextEdit {
                     graphic: Graphics {
                         size,
                         point,
-                        drv: GPU_DEVICE.clone(),
+                        drv: gpu,
                     },
                     parent,
                     base_component: Panel::new(size, point),

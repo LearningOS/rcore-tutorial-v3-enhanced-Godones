@@ -1,4 +1,4 @@
-use alloc::{sync::Arc};
+use alloc::sync::Arc;
 use embedded_graphics::{
     image::Image,
     pixelcolor::Rgb888,
@@ -7,10 +7,7 @@ use embedded_graphics::{
 };
 use tinybmp::Bmp;
 
-use crate::{
-    drivers::{gui::GPU_DEVICE},
-    sync::UPIntrFreeCell,
-};
+use crate::{drivers::gui::GPU_DEVICE, sync::UPIntrFreeCell};
 
 use super::{Component, Graphics};
 

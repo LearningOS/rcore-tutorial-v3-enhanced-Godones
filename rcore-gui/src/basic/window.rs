@@ -1,4 +1,4 @@
-use crate::gui::{Bar, Component, Graphics, ImageComp, Panel};
+use crate::{Bar, Component, Graphics, ImageComp, Panel};
 use crate::UPIntrFreeCell;
 use crate::GPU_DEVICE;
 use alloc::collections::VecDeque;
@@ -12,6 +12,7 @@ use embedded_graphics::prelude::RgbColor;
 use embedded_graphics::text::Text;
 use embedded_graphics::text::{Baseline};
 use embedded_graphics::Drawable;
+use log::info;
 
 
 pub struct Windows {
@@ -81,7 +82,7 @@ impl Windows {
                     graphic: Graphics {
                         size,
                         point,
-                        drv: GPU_DEVICE.clone(),
+                        drv: GPU_DEVICE.exclusive_access().clone(),
                     },
                 })
             },
@@ -109,7 +110,6 @@ impl Component for Windows {
             com.paint();
         });
         // 渲染窗口名称
-
         Text::with_baseline(
             &inner.name,
             Point::new(0, 0),

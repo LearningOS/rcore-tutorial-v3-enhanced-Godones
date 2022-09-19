@@ -13,7 +13,7 @@ use embedded_graphics::{
 
 use crate::{drivers::gui::GPU_DEVICE, sync::UPIntrFreeCell};
 
-use super::{ Component, Graphics};
+use super::{Component, Graphics};
 
 pub struct Terminal {
     inner: UPIntrFreeCell<TerminalInner>,

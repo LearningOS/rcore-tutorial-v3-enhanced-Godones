@@ -99,7 +99,6 @@ pub fn trap_handler() -> ! {
             suspend_current_and_run_next();
         }
         Trap::Interrupt(Interrupt::SupervisorExternal) => {
-            info!("SupervisorExternal");
             crate::board::irq_handler();
         }
         _ => {

@@ -1,12 +1,12 @@
-use alloc::collections::VecDeque;
-use alloc::sync::Arc;
-use embedded_graphics::Drawable;
 use crate::gui::{Component, Graphics};
 use crate::{UPIntrFreeCell, GPU_DEVICE};
+use alloc::collections::VecDeque;
+use alloc::sync::Arc;
 use embedded_graphics::geometry::{Point, Size};
 use embedded_graphics::pixelcolor::Rgb888;
-use embedded_graphics::prelude::{Primitive};
+use embedded_graphics::prelude::Primitive;
 use embedded_graphics::primitives::{PrimitiveStyle, Rectangle};
+use embedded_graphics::Drawable;
 pub struct Bar {
     inner: UPIntrFreeCell<BarInner>,
 }
@@ -15,7 +15,7 @@ struct BarInner {
     graphic: Graphics,                   //画布
     comps: VecDeque<Arc<dyn Component>>, //组件列表
     #[allow(unused)]
-    parent: Option<Arc<dyn Component>>,  //父组件
+    parent: Option<Arc<dyn Component>>, //父组件
 }
 
 impl Component for Bar {

@@ -201,6 +201,10 @@ pub fn condvar_wait(condvar_id: usize, mutex_id: usize) {
 pub fn create_desktop() {
     sys_create_desktop();
 }
+
+pub fn snake_game(){
+    sys_snake_game();
+}
 #[macro_export]
 macro_rules! vstore {
     ($var_ref: expr, $value: expr) => {

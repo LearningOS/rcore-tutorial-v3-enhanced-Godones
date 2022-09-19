@@ -1,0 +1,16 @@
+[package]
+name = "rcore-gui"
+version = "0.1.0"
+edition = "2021"
+authors = ["chen linfeng"]
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rcore-sync = { path = "../rcore-sync" }
+virtio-drivers = { git = "https://github.com/rcore-os/virtio-drivers"}
+embedded-graphics = "0.7.1"
+tinybmp = "0.3.1"
+
+lazy_static = "1.4.0"
+
+log = "0.4.14"

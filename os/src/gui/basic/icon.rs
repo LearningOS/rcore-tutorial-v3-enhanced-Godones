@@ -9,8 +9,8 @@ use tinybmp::Bmp;
 
 use super::{Component, Graphics};
 use crate::drivers::gui::{VIRTGPU_XRES, VIRTGPU_YRES};
-use crate::{drivers::gui::GPU_DEVICE, sync::UPIntrFreeCell};
 use crate::gui::TextEdit;
+use crate::{drivers::gui::GPU_DEVICE, sync::UPIntrFreeCell};
 
 static FILEICON: &[u8] = include_bytes!("../../assert/file.bmp");
 
@@ -41,7 +41,6 @@ impl IconController {
             },
         }
     }
-
 }
 
 impl Component for IconController {
@@ -62,8 +61,10 @@ impl Component for IconController {
             // );
             // //20+64
             // text.draw(&mut inner.graphic).expect("draw text error");
-            let edit = TextEdit::new(Size::new(64,20),Point::new(x,y+64),None);
-            edit.with_font_color(Rgb888::WHITE).add_str(file.as_str()).repaint();
+            let edit = TextEdit::new(Size::new(64, 20), Point::new(x, y + 64), None);
+            edit.with_font_color(Rgb888::WHITE)
+                .add_str(file.as_str())
+                .repaint();
 
             if y >= 600 {
                 x = x + 70;

@@ -35,7 +35,7 @@ impl Panel {
             },
         }
     }
-    pub fn with_color(self, color: Rgb888) -> Self {
+    pub fn set_background_color(&self, color: Rgb888) -> &Self {
         self.inner.exclusive_access().back_color = color;
         self
     }

@@ -1,10 +1,7 @@
 use alloc::string::ToString;
 use alloc::{string::String, sync::Arc};
 use embedded_graphics::{
-    mono_font::{
-        ascii::{FONT_10X20},
-        MonoTextStyle,
-    },
+    mono_font::{ascii::FONT_10X20, MonoTextStyle},
     pixelcolor::Rgb888,
     prelude::{Dimensions, Point, RgbColor, Size},
     text::{Alignment, Text},
@@ -62,7 +59,8 @@ impl Button {
     }
     pub fn cover_part(&self, color: Rgb888) -> &Self {
         let inner = self.inner.exclusive_access();
-        let panel = Panel::new(inner.graphic.size, inner.graphic.point).with_color(color);
+        let panel = Panel::new(inner.graphic.size, inner.graphic.point);
+        panel.set_background_color(color);
         panel.paint();
         self
     }

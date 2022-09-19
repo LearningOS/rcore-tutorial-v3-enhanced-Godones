@@ -5,11 +5,12 @@ use embedded_graphics::{
     prelude::{Point, Size},
     Drawable,
 };
+use log::info;
 use tinybmp::Bmp;
 
 use crate::{
-    drivers::{gui::GPU_DEVICE},
-    sync::UPIntrFreeCell,
+    GPU_DEVICE,
+    UPIntrFreeCell,
 };
 
 use super::{Component, Graphics};
@@ -39,7 +40,7 @@ impl ImageComp {
                     graphic: Graphics {
                         size,
                         point,
-                        drv: GPU_DEVICE.clone(),
+                        drv: GPU_DEVICE.exclusive_access().clone(),
                     },
                 }),
             }
@@ -49,6 +50,7 @@ impl ImageComp {
 
 impl Component for ImageComp {
     fn paint(&self) {
+        info!("paint image");
         let mut inner = self.inner.exclusive_access();
         let b = unsafe {
             let len = inner.image.len();
@@ -56,9 +58,11 @@ impl Component for ImageComp {
             core::slice::from_raw_parts(ptr, len)
         };
         let bmp = Bmp::<Rgb888>::from_slice(b).unwrap();
+        info!("bmp size: {:?}", b.len());
         Image::new(&bmp, Point::new(0, 0))
             .draw(&mut inner.graphic)
             .expect("make image error");
+        info!("paint image done");
     }
 
     fn add(&self, _comp: alloc::sync::Arc<dyn Component>) {

@@ -4,9 +4,10 @@
 #![feature(alloc_error_handler)]
 #![allow(unused_must_use)]
 
-use k210_pac::fft::STATUS;
 #[cfg(feature = "board_qemu")]
 use crate::drivers::{KEYBOARD_DEVICE, MOUSE_DEVICE};
+use dtb_walker::Property::Status;
+use k210_pac::fft::STATUS;
 
 extern crate alloc;
 
@@ -38,7 +39,6 @@ mod timer;
 mod trap;
 // #[cfg(feature = "board_qemu")]
 pub mod gui;
-pub mod rcore_gui;
 
 // use syscall::create_desktop; //for test
 
@@ -64,9 +64,10 @@ lazy_static! {
 }
 
 use crate::drivers::GPU_DEVICE;
+use crate::gui::Snake;
+use crate::lang_items::init_kernel_data;
 pub use log::{debug, error, info, trace, warn};
 use riscv::register::sstatus;
-use crate::lang_items::init_kernel_data;
 
 #[no_mangle]
 pub fn rust_main(_hartid: usize, device_tree_paddr: usize) -> ! {
@@ -77,15 +78,11 @@ pub fn rust_main(_hartid: usize, device_tree_paddr: usize) -> ! {
     dtb::init_dtb(device_tree_paddr);
     dtb::init_device();
 
-    rcore_gui::test_gui();
-    loop {
-
-    }
-
     // panic!("DON'T USE THIS");
     println!("KERN: init gpu");
     #[cfg(feature = "board_qemu")]
     GPU_DEVICE.clone();
+    // init_gui::test_gui();
     println!("KERN: init keyboard");
     #[cfg(feature = "board_qemu")]
     KEYBOARD_DEVICE.clone();
@@ -100,11 +97,12 @@ pub fn rust_main(_hartid: usize, device_tree_paddr: usize) -> ! {
     board::device_init();
     fs::list_apps();
 
-    #[cfg(feature = "STACK")]
-    init_kernel_data();
+    // #[cfg(feature = "STACK")]
+    // init_kernel_data();
 
     syscall::create_desktop(); //for test
                                // initialize kernel data for stack_trace
+
     task::add_initproc();
     *DEV_NON_BLOCKING_ACCESS.exclusive_access() = true;
     task::run_tasks();

@@ -1,34 +1,41 @@
+use crate::gui::basic::manager::{SCREEN_MANAGER, WINDOW_ID_ALLOCATOR};
 use crate::gui::{Bar, Component, Graphics, ImageComp, Panel};
 use crate::UPIntrFreeCell;
 use crate::GPU_DEVICE;
 use alloc::collections::VecDeque;
 use alloc::string::{String, ToString};
 use alloc::sync::Arc;
+use alloc::vec::Vec;
 use embedded_graphics::geometry::{Point, Size};
 use embedded_graphics::mono_font::ascii::FONT_10X20;
 use embedded_graphics::mono_font::MonoTextStyle;
 use embedded_graphics::pixelcolor::Rgb888;
 use embedded_graphics::prelude::RgbColor;
+use embedded_graphics::text::Baseline;
 use embedded_graphics::text::Text;
-use embedded_graphics::text::{Baseline};
 use embedded_graphics::Drawable;
-
+use log::info;
+use virtio_input_decoder::Key;
+use virtio_input_decoder::Key::S;
 
 pub struct Windows {
+    id: usize,
     inner: UPIntrFreeCell<WindowsInner>,
 }
 
 struct WindowsInner {
+    event: VecDeque<Key>,
     name: String,
     component: VecDeque<Arc<dyn Component>>,
     graphic: Graphics,
+    panel: Arc<Panel>,
 }
 
 const TITLE_BAR_HEIGHT: i32 = 20;
 const TITLE_ICON_WH: i32 = 16;
 const TITLE_ICON_SPACE: i32 = 4;
 impl Windows {
-    pub fn new(size: Size, point: Point) -> Self {
+    pub fn new(size: Size, point: Point) -> Arc<Self> {
         // 加一个bar
         let bar_size = Size::new(size.width, TITLE_BAR_HEIGHT as u32);
         let bar_point = Point::new(point.x, point.y - TITLE_BAR_HEIGHT);
@@ -68,14 +75,18 @@ impl Windows {
         bar.add(max_img);
 
         let windows = Arc::new(Panel::new(size, point));
-        Self {
+
+        let id = WINDOW_ID_ALLOCATOR.exclusive_access().alloc();
+        let window = Arc::new(Self {
+            id,
             inner: unsafe {
                 UPIntrFreeCell::new(WindowsInner {
+                    event: VecDeque::new(),
                     name: "".to_string(),
                     component: {
                         let mut v: VecDeque<Arc<dyn Component>> = VecDeque::new();
                         v.push_back(bar);
-                        v.push_back(windows);
+                        v.push_back(windows.clone());
                         v
                     },
                     graphic: Graphics {
@@ -83,14 +94,43 @@ impl Windows {
                         point,
                         drv: GPU_DEVICE.clone(),
                     },
+                    panel: windows.clone(),
                 })
             },
-        }
+        });
+        let mut screen = SCREEN_MANAGER.exclusive_access();
+        screen.update(
+            bar_size + Size::new(0, size.height),
+            bar_point,
+            window.clone(),
+        );
+        window
     }
-    pub fn with_name(&self, name: &str) -> &Self {
+    pub fn id(&self) -> usize {
+        self.id
+    }
+    pub fn set_title(&self, name: &str) -> &Self {
         let mut inner = self.inner.exclusive_access();
         inner.name = name.to_string();
         self
+    }
+    pub fn set_back_ground_color(&self, color: Rgb888) -> &Self {
+        let mut inner = self.inner.exclusive_access();
+        inner.panel.set_background_color(color);
+        self
+    }
+    pub fn receive_event(&self, key: Key) {
+        let mut inner = self.inner.exclusive_access();
+        inner.event.push_back(key);
+        if inner.event.len() > 20 {
+            inner.event.pop_front();
+        }
+        info!("event len: {}", inner.event.len());
+    }
+    pub fn get_event(&self) -> Option<Key> {
+        let mut inner = self.inner.exclusive_access();
+        let event = inner.event.pop_front();
+        event
     }
 }
 

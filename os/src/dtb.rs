@@ -1,4 +1,4 @@
-use crate::drivers::rtc::{init_rtc, QEMU_RTC};
+use crate::drivers::rtc::{get_current_time, init_rtc, Rtc, QEMU_RTC};
 use crate::sync::UPIntrFreeCell;
 use alloc::format;
 use alloc::string::{String, ToString};
@@ -157,7 +157,7 @@ pub fn init_device() {
         .for_each(|device| match device {
             Device::Rtc(rtc_device) => {
                 init_rtc(rtc_device.base.base_addr, rtc_device.base.irq);
-                let time = unsafe { QEMU_RTC.get().unwrap().read_time() };
+                let time = get_current_time();
                 println!("time: {:?}", time);
                 unsafe {
                     QEMU_RTC.get().unwrap().enable_irq();

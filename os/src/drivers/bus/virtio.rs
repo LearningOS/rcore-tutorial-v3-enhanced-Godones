@@ -1,10 +1,11 @@
-use alloc::vec::Vec;
 use crate::mm::{
     frame_alloc, frame_dealloc, kernel_token, FrameTracker, PageTable, PhysAddr, PhysPageNum,
     StepByOne, VirtAddr,
 };
 use crate::sync::UPIntrFreeCell;
+use alloc::vec::Vec;
 use lazy_static::*;
+use log::info;
 use virtio_drivers::Hal;
 
 lazy_static! {
@@ -26,6 +27,7 @@ impl Hal for VirtioHal {
             QUEUE_FRAMES.exclusive_access().push(frame);
         }
         let pa: PhysAddr = ppn_base.into();
+        info!("dma_alloc: pa = {:#x}", pa.0);
         pa.0
     }
 

@@ -1,8 +1,8 @@
+use crate::gui::{Bar, Component};
+use crate::syscall::TIMER;
 use alloc::format;
 use alloc::string::{String, ToString};
 use core::fmt::{Debug, Formatter};
-use crate::gui::{Bar, Component};
-use crate::syscall::TIMER;
 use once_cell::unsync::OnceCell;
 use riscv::addr::BitField;
 use time::macros::offset;
@@ -69,7 +69,8 @@ impl Rtc {
         let ns_high = unsafe { ((self.base_addr + RTC_TIME_HIGH) as *const u32).read_volatile() };
         // 将ns转换为当前时间
         let ns = (ns_high as u64) << 32 | ns_low as u64;
-        let t = time::OffsetDateTime::from_unix_timestamp_nanos(ns as i128).expect("invalid time");
+        let t = time::OffsetDateTime::from_unix_timestamp_nanos(ns as i128)
+            .expect("invalid time");
         let t = t.to_offset(offset!(+8));
         RtcTime {
             year: t.year() as u32,
@@ -124,4 +125,15 @@ impl Rtc {
         self.clear_alarm();
         self.clear_interrupt();
     }
+    pub fn get_timestamp(&self) -> u64 {
+        let ns_low = unsafe { ((self.base_addr + RTC_TIME_LOW) as *const u32).read_volatile() };
+        let ns_high = unsafe { ((self.base_addr + RTC_TIME_HIGH) as *const u32).read_volatile() };
+        // 将ns转换为当前时间
+        let ns = (ns_high as u64) << 32 | ns_low as u64;
+        ns
+    }
+}
+
+pub fn get_current_time() -> RtcTime {
+    unsafe { QEMU_RTC.get().unwrap().read_time() }
 }

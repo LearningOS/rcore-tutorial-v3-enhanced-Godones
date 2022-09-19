@@ -2,12 +2,12 @@
 pub mod block;
 pub mod chardev;
 
+pub mod bus;
 pub mod gui;
 #[cfg(feature = "board_qemu")]
 pub mod input;
 pub mod plic;
 pub mod rtc;
-pub mod bus;
 
 pub use block::BLOCK_DEVICE;
 #[cfg(feature = "board_qemu")]
@@ -65,5 +65,3 @@ pub extern "C" fn virtio_virt_to_phys(vaddr: VirtAddr) -> PhysAddr {
         .translate_va(vaddr)
         .unwrap()
 }
-
-

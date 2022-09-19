@@ -5,12 +5,13 @@ use embedded_graphics::{
     prelude::{Point, RgbColor, Size},
     Drawable,
 };
+use log::{error, info};
 use tinybmp::Bmp;
 
 use super::{Component, Graphics};
-use crate::drivers::gui::{VIRTGPU_XRES, VIRTGPU_YRES};
-use crate::{drivers::gui::GPU_DEVICE, sync::UPIntrFreeCell};
-use crate::gui::TextEdit;
+use crate::{VIRTGPU_XRES, VIRTGPU_YRES};
+use crate::{GPU_DEVICE, UPIntrFreeCell};
+use crate::TextEdit;
 
 static FILEICON: &[u8] = include_bytes!("../../assert/file.bmp");
 
@@ -32,9 +33,9 @@ impl IconController {
                 UPIntrFreeCell::new(IconControllerInner {
                     files,
                     graphic: Graphics {
-                        size: Size::new(VIRTGPU_XRES, VIRTGPU_YRES),
+                        size: Size::new(*VIRTGPU_XRES.exclusive_access(), *VIRTGPU_YRES.exclusive_access()),
                         point: Point::new(0, 0),
-                        drv: GPU_DEVICE.clone(),
+                        drv: GPU_DEVICE.exclusive_access().clone(),
                     },
                     parent,
                 })
@@ -51,20 +52,14 @@ impl Component for IconController {
         let mut y = 10;
         let v = inner.files.clone();
         for file in v {
+            info!("file: {}", file);
             let bmp = Bmp::<Rgb888>::from_slice(FILEICON).unwrap();
             Image::new(&bmp, Point::new(x, y))
                 .draw(&mut inner.graphic)
                 .expect("make image error");
-            // let text = Text::new(
-            //     file.as_str(),
-            //     Point::new(x, y + 80),
-            //     MonoTextStyle::new(&FONT_10X20, Rgb888::WHITE),
-            // );
-            // //20+64
-            // text.draw(&mut inner.graphic).expect("draw text error");
             let edit = TextEdit::new(Size::new(64,20),Point::new(x,y+64),None);
             edit.with_font_color(Rgb888::WHITE).add_str(file.as_str()).repaint();
-
+            // info!("creat icon success");
             if y >= 600 {
                 x = x + 70;
                 y = 10;
@@ -72,6 +67,7 @@ impl Component for IconController {
                 y = y + 90;
             }
         }
+        info!("paint icon controller success");
     }
 
     fn add(&self, _comp: Arc<dyn Component>) {

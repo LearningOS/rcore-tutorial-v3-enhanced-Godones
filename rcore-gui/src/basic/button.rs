@@ -11,8 +11,8 @@ use embedded_graphics::{
     Drawable,
 };
 
-use crate::gui::Panel;
-use crate::{drivers::gui::GPU_DEVICE, sync::UPIntrFreeCell};
+use crate::Panel;
+use crate::{GPU_DEVICE, UPIntrFreeCell};
 
 use super::{Component, Graphics};
 
@@ -42,7 +42,7 @@ impl Button {
                     graphic: Graphics {
                         size,
                         point,
-                        drv: GPU_DEVICE.clone(),
+                        drv: GPU_DEVICE.exclusive_access().clone(),
                     },
                     text,
                     parent,

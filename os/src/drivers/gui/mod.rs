@@ -1,10 +1,10 @@
+use crate::drivers::bus::virtio::VirtioHal;
 use crate::sync::UPIntrFreeCell;
 use alloc::{sync::Arc, vec::Vec};
 use core::any::Any;
 use embedded_graphics::pixelcolor::Rgb888;
 use tinybmp::Bmp;
 use virtio_drivers::{VirtIOGpu, VirtIOHeader};
-use crate::drivers::bus::virtio::VirtioHal;
 
 pub const VIRTGPU_XRES: u32 = 1280;
 pub const VIRTGPU_YRES: u32 = 800;
@@ -22,7 +22,7 @@ lazy_static::lazy_static!(
 );
 
 pub struct VirtIOGPU {
-    gpu: UPIntrFreeCell<VirtIOGpu<'static,VirtioHal>>,
+    gpu: UPIntrFreeCell<VirtIOGpu<'static, VirtioHal>>,
     fb: &'static [u8],
 }
 static BMP_DATA: &[u8] = include_bytes!("../../assert/mouse.bmp");
@@ -42,13 +42,12 @@ impl VirtIOGPU {
                 let mut v = i.to_vec();
                 b.append(&mut v);
                 if i == [255, 255, 255] {
-                    b.push(0x0)
+                    b.push(0x0) //白色直接透明
                 } else {
                     b.push(0xff)
                 }
             }
-            virtio.setup_cursor(b.as_slice(), 50, 50, 50, 50).unwrap();
-
+            virtio.setup_cursor(b.as_slice(), 0, 0, 50, 50).unwrap();
             Self {
                 gpu: UPIntrFreeCell::new(virtio),
                 fb,
@@ -58,7 +57,10 @@ impl VirtIOGPU {
 }
 
 impl GPUDevice for VirtIOGPU {
-    fn update_cursor(&self) {}
+    fn update_cursor(&self) {
+        let mut gpu = self.gpu.exclusive_access();
+        gpu.move_cursor(0, 0);
+    }
     fn get_frame_buffer(&self) -> &mut [u8] {
         unsafe {
             let ptr = self.fb.as_ptr() as *const _ as *mut u8;

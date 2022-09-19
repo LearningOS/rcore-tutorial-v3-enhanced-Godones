@@ -1,15 +1,17 @@
+mod decoder;
+
+use crate::drivers::bus::virtio::VirtioHal;
 use crate::{sync::UPIntrFreeCell, syscall::PAD};
 use alloc::{string::ToString, sync::Arc};
 use core::any::Any;
 use log::info;
 use virtio_drivers::{VirtIOHeader, VirtIOInput};
 use virtio_input_decoder::{Decoder, KeyType};
-use crate::drivers::bus::virtio::VirtioHal;
 
 const VIRTIO5: usize = 0x10005000;
 const VIRTIO6: usize = 0x10006000;
 
-struct VirtIOINPUT(UPIntrFreeCell<VirtIOInput<'static,VirtioHal>>);
+struct VirtIOINPUT(UPIntrFreeCell<VirtIOInput<'static, VirtioHal>>);
 
 pub trait INPUTDevice: Send + Sync + Any {
     fn handle_irq(&self);
@@ -31,9 +33,8 @@ impl VirtIOINPUT {
 impl INPUTDevice for VirtIOINPUT {
     fn handle_irq(&self) {
         let mut input = self.0.exclusive_access();
-        input.ack_interrupt();//确认收到中断
-        while let Some(event) = input.pop_pending_event(){
-            info!("event: {:?}",event);
+        input.ack_interrupt(); //确认收到中断
+        while let Some(event) = input.pop_pending_event() {
             let dtype = match Decoder::decode(
                 event.event_type as usize,
                 event.code as usize,
@@ -42,29 +43,7 @@ impl INPUTDevice for VirtIOINPUT {
                 Ok(dtype) => dtype,
                 Err(_) => return,
             };
-            match dtype {
-                virtio_input_decoder::DecodeType::Key(key, r#type) => {
-                    println!("{:?} {:?}", key, r#type);
-                    if r#type == KeyType::Press {
-                        let inner = PAD.exclusive_access();
-                        let a = inner.as_ref().unwrap();
-                        match key.to_char() {
-                            Ok( k) => {
-                                if k == '\r' {
-                                    a.add_str(&(k.to_string() + "\n"));
-                                } else {
-                                    a.add_str(k.to_string().as_str());
-                                }
-                            }
-                            Err(_) => {}
-                        }
-                        if key == virtio_input_decoder::Key::BackSpace {
-                            a.add_special_char(127);
-                        }
-                    }
-                }
-                virtio_input_decoder::DecodeType::Mouse(mouse) => println!("{:?}", mouse),
-            }
+            decoder::decode(dtype);
         }
     }
 }
