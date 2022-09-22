@@ -189,6 +189,18 @@ unsafe fn backtrace() {
 为了解决这个问题，可以在开始进入用户态之前就读取内核数据，后面如果发生错误，就不需要读取文件发生死锁。上面的代码修改为:
 
 ```rust
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+   	......
+    unsafe {
+        if KERNEL_DATA.exclusive_access().is_empty() {
+            shutdown(255);
+        }
+        backtrace();
+    }
+    shutdown(255)
+}
+
 lazy_static!{
     static ref KERNEL_DATA: UPIntrFreeCell<Vec<u8>> = unsafe{UPIntrFreeCell::new(Vec::new())};
 }
@@ -221,7 +233,9 @@ unsafe fn backtrace() {
 
 在main函数中，在开始进入用户程序之前调用`init_kernel_data()`即可。
 
+==注意需要扩大内核堆大小，因为内核ELF保存在堆上，需要十多MB的空间==
+
 ## 改进
 
 - [ ] 在编译前获取函数信息并与内核一同链接 --> 适用于所有章节的栈回溯方法
-- [ ] 使用`.eh_frame`进行栈回溯而不是读取函数的前两条指令
+- [ ] 使用`.eh_frame`进行栈回溯而不是读取函数的前两条指令(但内核已经被剥离了debug信息？)
