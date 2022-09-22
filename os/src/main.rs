@@ -98,7 +98,7 @@ pub fn rust_main(_hartid: usize, device_tree_paddr: usize) -> ! {
     fs::list_apps();
 
     // #[cfg(feature = "STACK")]
-    // init_kernel_data();
+    init_kernel_data();
 
     syscall::create_desktop(); //for test
                                // initialize kernel data for stack_trace

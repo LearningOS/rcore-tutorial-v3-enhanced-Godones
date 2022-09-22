@@ -19,10 +19,6 @@ fn panic(info: &PanicInfo) -> ! {
         println!("[kernel] Panicked: {}", info.message().unwrap());
     }
     unsafe {
-        println!(
-            "[kernel] Stack trace: {}",
-            KERNEL_DATA.exclusive_access().len()
-        );
         if KERNEL_DATA.exclusive_access().is_empty() {
             shutdown(255);
         }
