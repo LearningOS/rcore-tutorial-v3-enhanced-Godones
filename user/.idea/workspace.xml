@@ -16,21 +16,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="94001f01-aa6c-46f9-ac2a-251ab60eac50" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../os/src/logging.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../os/src/test.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../stack_trace/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../easy-fs-fuse/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../easy-fs-fuse/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../easy-fs/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/../easy-fs/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../easy-fs/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../easy-fs/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../easy-fs/src/vfs.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../easy-fs/src/vfs.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../os/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/../os/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../os/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/../os/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../os/src/config.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../os/src/config.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../kernel_trace/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../kernel_trace/Makefile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../kernel_trace/src/elf_info.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../os/src/lang_items.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../os/src/lang_items.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../os/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../os/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../os/src/trap/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../os/src/trap/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/bin/initproc.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/bin/initproc.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -93,6 +84,9 @@
       <workItem from="1661175083020" duration="759000" />
       <workItem from="1662711140948" duration="829000" />
       <workItem from="1662712077721" duration="5000" />
+      <workItem from="1663843998017" duration="24000" />
+      <workItem from="1663844037533" duration="5000" />
+      <workItem from="1663851317180" duration="308000" />
     </task>
     <servers />
   </component>

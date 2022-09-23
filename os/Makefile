@@ -66,15 +66,19 @@ $(KERNEL_BIN): kernel
 fs-img: $(APPS)
 	@cd ../user && make build TEST=$(TEST)
 	@rm -f $(FS_IMG)
-	@cd ../easy-fs-fuse && cargo run --release -- -s ../user/src/bin/ -t ../user/target/riscv64gc-unknown-none-elf/release/ -k ../os/target/riscv64gc-unknown-none-elf/release/
+	@cd ../easy-fs-fuse && cargo run --release -- -s ../user/src/bin/ -t ../user/target/riscv64gc-unknown-none-elf/release/
 
 $(APPS):
 
 kernel:
 	@echo Platform: $(BOARD)
 	@#cp src/linker-$(BOARD).ld src/linker.ld
-	@cargo build --release --features "board_$(BOARD)"
+	@touch src/trace/kernel_symbol.S && rm src/trace/kernel_symbol.S
+	@cargo build --release --features "board_$(BOARD)" #第一次编译没有链接符号信息
 	@#rm src/linker.ld
+	@cd ../stack_trace/trace_exe && make && (nm -n ../../os/${KERNEL_ELF} | ./target/release/kernel_trace > ../../os/src/trace/kernel_symbol.S)
+	@cd ../../os
+	@cargo build --release --features "board_$(BOARD)"  #第二次编译有链接符号信息
 
 clean:
 	@cargo clean

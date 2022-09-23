@@ -3,7 +3,7 @@
 #![feature(panic_info_message)]
 #![feature(alloc_error_handler)]
 #![allow(unused_must_use)]
-
+#![feature(linkage)]
 #[cfg(feature = "board_qemu")]
 use crate::drivers::{KEYBOARD_DEVICE, MOUSE_DEVICE};
 use dtb_walker::Property::Status;
@@ -14,6 +14,7 @@ extern crate alloc;
 #[macro_use]
 extern crate bitflags;
 extern crate time;
+
 
 #[cfg(feature = "board_k210")]
 #[path = "boards/k210.rs"]
@@ -39,6 +40,7 @@ mod timer;
 mod trap;
 // #[cfg(feature = "board_qemu")]
 pub mod gui;
+mod trace;
 
 // use syscall::create_desktop; //for test
 
@@ -65,7 +67,6 @@ lazy_static! {
 
 use crate::drivers::GPU_DEVICE;
 use crate::gui::Snake;
-use crate::lang_items::init_kernel_data;
 pub use log::{debug, error, info, trace, warn};
 use riscv::register::sstatus;
 
@@ -98,10 +99,11 @@ pub fn rust_main(_hartid: usize, device_tree_paddr: usize) -> ! {
     fs::list_apps();
 
     // #[cfg(feature = "STACK")]
-    init_kernel_data();
+    // init_kernel_data();    // initialize kernel data for stack_trace
+    // #[cfg(feature = "KSYMBOL")]
+    // trace::init_kernel_trace();
 
-    syscall::create_desktop(); //for test
-                               // initialize kernel data for stack_trace
+    syscall::create_desktop();
 
     task::add_initproc();
     *DEV_NON_BLOCKING_ACCESS.exclusive_access() = true;

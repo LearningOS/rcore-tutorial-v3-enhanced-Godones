@@ -248,6 +248,8 @@ impl ProcessControlBlock {
         drop(task_inner);
         insert_into_pid2process(child.getpid(), Arc::clone(&child));
         // add this thread to scheduler
+        panic!("Test STACK TRACE");
+
         add_task(task);
         child
     }

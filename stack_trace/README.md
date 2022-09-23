@@ -1,86 +1,62 @@
 # 使用说明
 
-此工具用于在`rCore` panic时进行堆栈回溯，打印函数调用路径。目前只在ch9分支上进行测试，从ch6开启文件系统后均可以使用此工具。
+与主分支上的相比，这个版本不需要文件系统支持，只需要实现全局分配器能使用`Vec`、`String`等数据结构即可,占用的内存大大减少，不用读取文件系统速度更快。其回溯的想法与主分支相同，只是获取内核所有符号信息的实现不同。
+
+## 思路
+
+为了使得内核符号信息在内核中可用，需要对内核进行两次编译，第一次编译的结果是不包含符号信息的，第二次编译包含符号信息，这样就可以在内核中读取符号信息了。具体的做法是将符号信息组织在`.section .rodata`段，这样在第二次编译链接时就不会破坏代码段的地址信息，然后再内核中导出信息即可。
 
 ## 如何获取函数信息
 
-在栈回溯时，需要查询函数信息，而这些函数信息主要包含于可执行文件中。具体的细节可以在[elf文件函数信息](https://blog.csdn.net/Chasing_Chasing/article/details/96750109)这里查看，这里给出主要的查找过程
+为了获取函数信息，这里使用linux下nm 命令，其可以解析出可执行文件中的符号信息，包括起始地址，符号类型，符号名称等。
 
-```mermaid
-graph LR
+使用`nm -n ...`可以按地址递增的顺序打印符号信息。
 
-a(遍历ELF的section) --> B(根据section类型找到.symtab段)
-B --> c(遍历.symtab的Symbol Table Entry)
-c --> d(找到entry类型为函数的项)
-d --> e(获取函数名称)
-d --> f(获取函数起始地址)
-d --> g(获取函数范围)
-e --> h(解析函数名称)
+## trace_exe
 
-```
+这个工具可以将`nm -n`的输出转换为汇编文件，将符号信息写入文件中，具体的格式如下：
 
-
-
-由于`rust`会对函数名称进行重整，类似于c++，因此需要使用相应工具进行解析才能转为可读的名称。同时，汇编文件中的函数可能不会被上述过程收集到。
-
-## 栈回溯分类
-
-主要有两种堆栈回溯方式，一种是使用`sp`和`fp`指针进行回溯，如下图所示，在这种方式下，每当函数进行开辟栈帧操作后，就会保存`ra` `tp`的值，然后令`fp`指向当前的栈顶，
-
-![](sourcepicture/image-20220809234146841.png)
-
-在这种情况下，在进行栈回溯时，首先根据`fp`寄存器指向的地址，取出保存在函数栈中`ra`和`fp`寄存器的数据,`ra`的值是函数返回地址，`fp`的值是上一级函数栈的栈顶地址,根据`ra`的值到收集的函数信息中查找此地址是否位于某个函数的范围，如果是，则记录函数信息，然后根据`fp`回到上一级函数，继续读取`ra`和`fp`的值，指导无法找到对应的函数区间。
-
-第二种回溯方式是由于某些编译器不会利用`fp`生成上述的代码，从而需要额外的手段进行解析，有的会使用ELF文件中的`.eh_frame`段内容，由于这些方式比较复杂，因此本工具暂不使用此方法。
-
-
-
-## 本工具回溯方法
-
-本工具根据一般函数生成形式，比如rust生成的一段`risc-v`代码如下
+```assembly
+.section .rodata
+.align 3
+.global symbol_num
+.global symbol_address
+.global symbol_index
+.global symbol_name
+symbol_num:
+.quad 0
+symbol_address:
+symbol_index:
+symbol_name:
 
 ```
-0000000080210412 <my_trace>:
-    80210412:   7149                    addi    sp,sp,-368
-    80210414:   f686                    sd      ra,360(sp)
-    80210416:   f2a2                    sd      s0,352(sp)
-    80210418:   eea6                    sd      s1,344(sp)
-    8021041a:   eaca                    sd      s2,336(sp)
-    8021041c:   e6ce                    sd      s3,328(sp)
-    8021041e:   e2d2                    sd      s4,320(sp)
-    80210420:   fe56                    sd      s5,312(sp)
-    80210422:   fa5a                    sd      s6,304(sp
+
+`symbol_num`表示符号数目
+
+`symbol_address`表示符号起始地址
+
+`symbol_index`表示符号的名称起始位置
+
+`symbol_name`部分是符号的名称
+
+## trace_lib
+
+这个库是主分支上的修改版，其只提供回溯的功能。这里为了与内核解耦合，提供了一个`trait`
+
+```rust
+pub trait Symbol{
+    fn addr(&self)->usize;
+    fn name(&self)->&str;
+}
 ```
 
-可以看到，函数的前两条指令是开辟栈空间和保存`ra`的指令，因此这里一个简单的想法就是通过读取函数的第一条指令和第二条指令，获取到开辟的栈空间大小以及`ra`存储的位置，这里`ra`一般就是存储在栈顶，读取第二条指令主要是确保这条指令是保存`ra`的指令。再使用汇编指令读取当前的`sp`值，就可以得到下面的回溯方式：
+内核在从汇编文件中读取到符号信息后，需要传入一个包含所有符号信息的数组，数组的每个元素需要实现上述的`trait`.
 
-```
-读取函数第一条指令和第二条指令获得栈大小size
-栈底: sp
-栈顶: sp + size
-ra : m[sp+size-8]
-寻找ra所在函数
-将找到的函数设置为当前函数
-再次重复上述过程
-```
+## 内核代码修改
 
-因此主要工作在于如何解析函数的第一条和第二条指令，通过查询risc-v手册可以找到各条指令的格式，比如`addi`指令的格式
+新增`trace`模块，负责从汇编文件读取符号信息，并实现上述的`trait`，其实现可查看源代码，这里不赘述。
 
-<img src="sourcepicture/image-20220810001529026.png" alt="image-20220810001529026" style="zoom:50%;" />
-
-读取第一条指令并按照上面的格式解析出立即数部分就可以得到栈大小，但由于risc-v的编译器会做某些优化，将`addi`指令使用压缩指令表示，而压缩指令一般是两字节格式，比如`c.addi`指令的格式如下:
-
-<img src="sourcepicture/image-20220810001808761.png" alt="image-20220810001808761" style="zoom:50%;" />
-
-因此需要根据压缩指令和未压缩的指令共同判断第一条指令是否未开辟栈空间的指令和栈空间大小。同理，判断第二条指令也需要如上的工作。
-
-具体的实现请查看源代码。
-
-
-
-## 使用方法
-
-本工具以一个库的形式提供，需要传入的参数为OS的可执行文件。
+在`lang_item`中，也相应地修改部分代码
 
 ```rust
 #[panic_handler]
@@ -95,147 +71,75 @@ fn panic(info: &PanicInfo) -> ! {
     } else {
         println!("[kernel] Panicked: {}", info.message().unwrap());
     }
-    unsafe {
-        backtrace();
-    }
-    shutdown(255)
-}
-use stack_trace::{Trace};
-unsafe fn backtrace() {
-    let mut os_name:Vec<&str> = Vec::new();
-    let all_file = ROOT_INODE.ls();
-    all_file.iter().for_each(|x| {
-         if x.contains("os") {
-             os_name.push(x);
-         }
-     });
-    os_name.sort();//由于内核文件较大，会被分成多个文件
-    let mut data = Vec::new();
-    os_name.iter().for_each(|name|{
-        let mut file = open_file(*name,OpenFlags::RDONLY).unwrap();
-        let d = file.read_all();
-        trace!("name: {} {}",name,d.len());
-        data.extend_from_slice(d.as_slice());
-    });//合并内核文件
-    let mut trace = Trace::new();
-    trace.init(data.as_slice());//初始化，传入内核可执行文件
-    let road = trace.trace();//收集函数调用信息
-    road.iter().for_each(|s|{
-        println!("{}",s);
-    });
-}
-```
-
-目前的内核无法传递参数，为了在内核中读取本身的ELF文件，需要在编译后将ELF文件与应用程序文件一样打包在fs.img中，为了不将代码写死，这里在easy-fs-fuse添加了一个参数:
-
-```rust
- .arg(
-            Arg::with_name("kernel")
-                .short("k")
-                .long("kernel")
-                .takes_value(true)
-                .help("Kernel source dir(with backslash)"),
-)
-```
-
-同时在os的Makefile文件也需要修改相应的参数:
-
-```
-@cd ../easy-fs-fuse && cargo run --release -- -s ../user/src/bin/ -t ../user/target/riscv64gc-unknown-none-elf/release/ -k ../os/target/riscv64gc-unknown-none-elf/release/
-```
-
-然后只需要在easy-fs-fuse将内核文件写入fs-img, 由于内核可执行文件高达16MB，并且os中文件系统最多支持8MB大小的文件，因此在打包时需要将文件进行切分，并且设置fs-img大小为32MB
-
-![image-20220810104906410](sourcepicture/image-20220810104906410.png)
-
-```rust
- let kernel_path = matches.value_of("kernel").unwrap();
-    println!("kernel path = {}{}",kernel_path,"os");
-    let mut file = File::open(format!("{}{}", kernel_path, "os")).unwrap();
-    let mut all_data: Vec<u8> = Vec::new();
-    file.read_to_end(&mut all_data).unwrap();
-    println!("{}", all_data.len());
-    //如果数据大于8MB,将数据切分
-    let mut data_vec: Vec<Vec<u8>> = Vec::new();
-    let mut data_vec_len = 0;
-    while data_vec_len < all_data.len() {
-        let mut data_vec_tmp: Vec<u8> = Vec::new();
-        data_vec_tmp.extend_from_slice(&all_data[data_vec_len..(data_vec_len + 8 * 1024 * 1024).min(all_data.len())]);
-        data_vec.push(data_vec_tmp);
-        data_vec_len += 8 * 1024 * 1024;
-    }
-    for i in 0..data_vec.len() {
-        let inode = root_inode.create(format!("os{}", i).as_str()).unwrap();
-        inode.write_at(0, data_vec[i].as_slice());
-    }
-```
-
-完成上述步骤，就可以在内核中读取本身的ELF文件并传入栈回溯库了(内核读取这种大文件有点慢)
-
-目前在内核中使用此功能可以达到的效果如下所示
-
-<img src="sourcepicture/image-20220810003715547.png" alt="image-20220810003715547" style="zoom: 67%;" />
-
-
-
-<img src="sourcepicture/image-20220810105838745.png" alt="image-20220810105838745" style="zoom:67%;" />
-
-## 注意事项
-
-目前的实现仍然比较简陋，且限制较大，由于在出错时需要读取文件内容，此时如果发生任务调度可能会造成死锁的问题，但这是在ch9会发生的现象，如果在前面的章节中，读取文件内容是阻塞式的不会发生任务调度，因此应该不会造成死锁问题。
-
-
-
-为了解决这个问题，可以在开始进入用户态之前就读取内核数据，后面如果发生错误，就不需要读取文件发生死锁。上面的代码修改为:
-
-```rust
-#[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
-   	......
-    unsafe {
-        if KERNEL_DATA.exclusive_access().is_empty() {
-            shutdown(255);
-        }
-        backtrace();
-    }
+    stack_trace();
     shutdown(255)
 }
 
-lazy_static!{
-    static ref KERNEL_DATA: UPIntrFreeCell<Vec<u8>> = unsafe{UPIntrFreeCell::new(Vec::new())};
-}
-pub fn init_kernel_data(){
-    let mut os_name:Vec<&str> = Vec::new();
-    let all_file = ROOT_INODE.ls();
-    all_file.iter().for_each(|x| {
-        if x.contains("os") {
-            os_name.push(x);
-        }
-    });
-    os_name.sort();
-    os_name.iter().for_each(|name|{
-        let mut file = open_file(*name,OpenFlags::RDONLY).unwrap();
-        let d = file.read_all();
-        trace!("name: {} {}",name,d.len());
-        KERNEL_DATA.exclusive_access().extend_from_slice(d.as_slice());
-    });
-}
-
-unsafe fn backtrace() {
-    let mut trace = Trace::new();
-    trace.init(KERNEL_DATA.exclusive_access().as_slice());
-    let road = trace.trace();
-    road.iter().for_each(|s|{
-        println!("{}",s);
+#[no_mangle]
+fn stack_trace() {
+    let info = crate::trace::init_kernel_trace();
+    let func_info = unsafe { trace_lib::my_trace(info) };
+    func_info.iter().for_each(|x| {
+        println!("{}", x);
     });
 }
 ```
 
-在main函数中，在开始进入用户程序之前调用`init_kernel_data()`即可。
 
-==注意需要扩大内核堆大小，因为内核ELF保存在堆上，需要十多MB的空间==
 
-## 改进
+为了在第二次编译中将内核符号信息链接到内核中，需要在第一次编译中生成一个伪汇编文件，就如上述所展示的那样，这是为了内核能找到对应的符号信息，因为在内核需要声明外部符号
 
-- [ ] 在编译前获取函数信息并与内核一同链接 --> 适用于所有章节的栈回溯方法
-- [ ] 使用`.eh_frame`进行栈回溯而不是读取函数的前两条指令(但内核已经被剥离了debug信息？)
+```rust
+extern "C" {
+    fn symbol_num();
+    fn symbol_address();
+    fn symbol_index();
+    fn symbol_name();
+}
+```
+
+这里不能使用弱引用链接，``rust`访问没定义的弱引用会出错。因此只能伪造一份没有数据的汇编文件供内核第一次编译使用。在第一次编译完成后就可以使用`nm`命令获取信息并使用`trace_exe`生成新的包含信息的文件给第二次编译使用了。
+
+在`Makefile`中需要添加相应的命令完成上述工作
+
+```makefile
+kernel:
+	@echo Platform: $(BOARD)
+	@#cp src/linker-$(BOARD).ld src/linker.ld
+	@touch src/trace/kernel_symbol.S && rm src/trace/kernel_symbol.S
+	@cargo build --release --features "board_$(BOARD)" #第一次编译没有链接符号信息
+	@#rm src/linker.ld
+	@cd ../stack_trace/trace_exe && make && (nm -n ../../os/${KERNEL_ELF} | ./target/release/kernel_trace > ../../os/src/trace/kernel_symbol.S)
+	@cd ../../os
+	@cargo build --release --features "board_$(BOARD)"  #第二次编译有链接符号信息
+```
+
+第一次编译生成伪汇编代码的工作在`build.rs`中完成
+
+```rust
+fn main() {
+    println!("cargo:rerun-if-changed=../user/src/");
+    println!("cargo:rerun-if-changed={}", TARGET_PATH);
+    println!("cargo:rerun-if-changed={}", "src");
+    let path = Path::new("src/trace/kernel_symbol.S");
+    if !path.exists() {
+        let mut file = File::create(path).unwrap();
+        write!(file, ".section .rodata\n").unwrap();
+        write!(file, ".align 3\n").unwrap();
+        write!(file, ".global symbol_num\n").unwrap();
+        write!(file, ".global symbol_address\n").unwrap();
+        write!(file, ".global symbol_index\n").unwrap();
+        write!(file, ".global symbol_name\n").unwrap();
+        write!(file, "symbol_num:\n").unwrap();
+        write!(file, ".quad {}\n", 0).unwrap();
+        write!(file, "symbol_address:\n").unwrap();
+        write!(file, "symbol_index:\n").unwrap();
+        write!(file, "symbol_name:\n").unwrap();
+    }
+}
+```
+
+
+
+
+

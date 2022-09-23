@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="CMakePresetLoader"><![CDATA[{
+  "useNewFormat": true
+}]]></component>
   <component name="CMakeSettings">
     <configurations>
       <configuration PROFILE_NAME="Debug" ENABLED="true" CONFIG_NAME="Debug" />
@@ -10,21 +16,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c95c506d-8e97-40bf-a91d-9690202d486b" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../os/src/logging.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../os/src/test.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../stack_trace/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../os/src/trace/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../easy-fs/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/../easy-fs/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../easy-fs/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../easy-fs/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../easy-fs/src/vfs.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../easy-fs/src/vfs.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../os/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/../os/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../os/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/../os/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../os/src/config.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../os/src/config.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../os/build.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../os/build.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../os/src/drivers/rtc/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../os/src/drivers/rtc/mod.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../os/src/lang_items.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../os/src/lang_items.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../os/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../os/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../os/src/task/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../os/src/task/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../os/src/trap/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../os/src/trap/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../user/src/bin/initproc.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../user/src/bin/initproc.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../os/src/task/process.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../os/src/task/process.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../os/symbol.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../stack_trace/Cargo.toml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../stack_trace/src/lib.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../stack_trace/src/parse.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../stack_trace/src/trace.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../user/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../user/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,7 +50,6 @@
   <component name="ProjectId" id="2D1ReXS10XzuPf3M5U8C9p5aARp" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
-    <option name="autoscrollFromSource" value="true" />
     <option name="autoscrollToSource" value="true" />
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -78,6 +84,7 @@
       <workItem from="1659962779704" duration="4223000" />
       <workItem from="1660062396378" duration="257000" />
       <workItem from="1660099683824" duration="666000" />
+      <workItem from="1663924923844" duration="557000" />
     </task>
     <servers />
   </component>

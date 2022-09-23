@@ -69,8 +69,7 @@ impl Rtc {
         let ns_high = unsafe { ((self.base_addr + RTC_TIME_HIGH) as *const u32).read_volatile() };
         // 将ns转换为当前时间
         let ns = (ns_high as u64) << 32 | ns_low as u64;
-        let t = time::OffsetDateTime::from_unix_timestamp_nanos(ns as i128)
-            .expect("invalid time");
+        let t = time::OffsetDateTime::from_unix_timestamp_nanos(ns as i128).expect("invalid time");
         let t = t.to_offset(offset!(+8));
         RtcTime {
             year: t.year() as u32,

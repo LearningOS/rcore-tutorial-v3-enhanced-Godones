@@ -1,31 +1,17 @@
-// 定义各个架构如何进行回溯，即如何通过sp,tp找到返回地址
+#![no_std]
 
-use crate::parse::FuncInfo;
-use crate::parse_elf;
+extern crate alloc;
 use alloc::format;
 use alloc::string::String;
 use alloc::vec::Vec;
 use bit_field::BitField;
 use core::arch::asm;
-use log::{info, trace};
+use log::{trace};
 
-pub struct Trace {
-    pub func_info: Vec<FuncInfo>,
-}
 
-impl Trace {
-    pub fn new() -> Self {
-        Trace {
-            func_info: Vec::new(),
-        }
-    }
-    pub fn init(&mut self, elf_data: &[u8]) {
-        self.func_info = parse_elf(elf_data);
-    }
-    pub unsafe fn trace(&self) -> Vec<String> {
-        // 回溯到函数调用的地方
-        my_trace(self)
-    }
+pub trait Symbol{
+    fn addr(&self)->usize;
+    fn name(&self)->&str;
 }
 
 // 在函数第一条指令，开辟栈空间
@@ -43,6 +29,7 @@ enum InstructionSp {
     CAddi16Sp(u32),
     Unknown,
 }
+
 impl InstructionSp {
     fn new(ins: u32) -> Self {
         let opcode = ins.get_bits(0..7);
@@ -107,7 +94,7 @@ impl InstructionSp {
     }
 }
 
-pub fn sd_ra(ins: u32) -> Option<u32> {
+fn sd_ra(ins: u32) -> Option<u32> {
     //检查指令是否是存储ra
     let opcode = ins.get_bits(0..7);
     return match opcode {
@@ -152,9 +139,9 @@ pub fn sd_ra(ins: u32) -> Option<u32> {
     };
 }
 
-#[no_mangle]
-pub unsafe fn my_trace(trace: &Trace) -> Vec<String> {
-    let s = my_trace as usize;
+
+pub unsafe fn my_trace<T:Symbol>(symbol: Vec<T>) -> Vec<String> {
+    let s = my_trace::<T> as usize;
     // 函数的第一条指令
     let mut ins = s as *const u32;
     let mut sp = {
@@ -166,7 +153,7 @@ pub unsafe fn my_trace(trace: &Trace) -> Vec<String> {
     loop {
         let first_ins = ins.read_volatile();
         trace!(
-            "{:#x} {:#b}",
+            "first_ins: {:#x} {:#b}",
             first_ins.get_bits(0..16),
             first_ins.get_bits(0..16)
         );
@@ -197,18 +184,26 @@ pub unsafe fn my_trace(trace: &Trace) -> Vec<String> {
         let stack_size = size;
         let ra_addr = sp + stack_size as usize - 8;
         let ra = (ra_addr as *const usize).read_volatile(); //8字节存储
+        trace!("ra: {:#x}", ra);
+
         let mut flag = false;
-        trace.func_info.iter().for_each(|t| {
-            if (t.addr..t.addr + t.size).contains(&(ra as u64)) {
-                let str = format!("{:#x} (+{}) {}", t.addr, ra as u64 - t.addr, t.name);
-                ins = t.addr as *const u32;
+        for i in 0..symbol.len() {
+            if symbol[i].addr() == ra
+                || (i + 1 < symbol.len() && (symbol[i].addr()..symbol[i + 1].addr()).contains(&ra))
+            {
+                let str = format!(
+                    "{:#x} (+{}) {}",
+                    symbol[i].addr(),
+                    ra - symbol[i].addr(),
+                    symbol[i].name()
+                );
+                trace!("{}", str);
+                ins = symbol[i].addr() as *const u32;
                 flag = true;
                 ans_str.push(str.clone());
-                // if t.name.contains("main") {
-                //     flag = false
-                // }
+                break;
             }
-        });
+        }
         if !flag {
             break;
         }

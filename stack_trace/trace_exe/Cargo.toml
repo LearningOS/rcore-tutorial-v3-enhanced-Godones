@@ -1,5 +1,5 @@
 [package]
-name = "stack_trace"
+name = "trace_exe"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,6 +7,3 @@ edition = "2021"
 
 [dependencies]
 rustc-demangle = "0.1.21"
-xmas-elf = "0.8.0"
-log = "0.4.14"
-bit_field = "0.10.1"
